@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "635805806832",
+    "project_id": "e-cut-9abb3",
+    "storage_bucket": "e-cut-9abb3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635805806832:android:32a8e58110dd70bb409235",
+        "android_client_info": {
+          "package_name": "com.example.beautybook_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIxEk_qWiHSkrSbfiBELFi1tnSDMEJk_M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
