@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firebase_options.dart';
 import 'services/store_service.dart';
+import 'ui/premium.dart';
 
 // 1. Φτιάχνουμε το αντικείμενο των ειδοποιήσεων
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -76,32 +77,7 @@ class ECutApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'e-Cut',
-      theme: ThemeData(
-        fontFamily: 'Inter',
-        primarySwatch: AppColors.primarySwatch,
-        scaffoldBackgroundColor: AppColors.backgroundGrouped,
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(fontSize: 34, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-          displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-          headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-          titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-          titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-          bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.textPrimary),
-          bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
-          labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        ),
-        cardTheme: const CardThemeData(
-          color: AppColors.surface,
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.surface,
-          foregroundColor: AppColors.textPrimary,
-          elevation: 0,
-          centerTitle: true,
-        ),
-      ),
+      theme: ECutTheme.light(),
       supportedLocales: const [
         Locale('el', 'GR'),
         Locale('en', 'US'),
@@ -186,7 +162,7 @@ class _AuthGateState extends State<AuthGate> {
       builder: (context, snap) {
         // 1. Αν φορτώνει ακόμα
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const PremiumSplashScreen();
         }
 
         // 2. Αν ο χρήστης είναι συνδεδεμένος
@@ -211,6 +187,7 @@ class _AuthGateState extends State<AuthGate> {
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
+
   @override
   State<SignInPage> createState() => _SignInPageState();
 }
@@ -221,6 +198,7 @@ class _SignInPageState extends State<SignInPage> {
   final _pass = TextEditingController();
   bool _loginMode = true;
   bool _loading = false;
+  bool _showPassword = false;
 
   Future<void> _submit() async {
     if (!_form.currentState!.validate()) return;
@@ -228,15 +206,20 @@ class _SignInPageState extends State<SignInPage> {
     try {
       if (_loginMode) {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _email.text.trim(), password: _pass.text.trim());
+          email: _email.text.trim(),
+          password: _pass.text.trim(),
+        );
       } else {
         await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _email.text.trim(), password: _pass.text.trim());
+          email: _email.text.trim(),
+          password: _pass.text.trim(),
+        );
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message ?? 'Σφάλμα σύνδεσης')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Σφάλμα σύνδεσης')),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -244,49 +227,201 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   @override
+  void dispose() {
+    _email.dispose();
+    _pass.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isRegister = !_loginMode;
+
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _form,
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Image.asset(
-                  'assets/images/logo.png',
-                  height: 100,
-                  fit: BoxFit.contain,
+      body: PremiumAuthBackground(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 20, 22, 28),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.center,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.78),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: Colors.white.withOpacity(0.88)),
+                          boxShadow: ECutShadows.soft,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            height: 86,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    Text(
+                      isRegister ? 'Ξεκίνα την premium εμπειρία σου' : 'Κλείσε την επόμενη περιποίησή σου',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.displayMedium,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      isRegister
+                          ? 'Δημιούργησε λογαριασμό και ανακάλυψε επιλεγμένες beauty & wellness υπηρεσίες.'
+                          : 'Ανακάλυψε curated επαγγελματίες ομορφιάς, διαθεσιμότητα και ραντεβού σε λίγα δευτερόλεπτα.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 28),
+                    PremiumSurface(
+                      padding: const EdgeInsets.all(22),
+                      child: Form(
+                        key: _form,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _AuthModePill(
+                                    label: 'Σύνδεση',
+                                    selected: _loginMode,
+                                    onTap: () => setState(() => _loginMode = true),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _AuthModePill(
+                                    label: 'Εγγραφή',
+                                    selected: !_loginMode,
+                                    onTap: () => setState(() => _loginMode = false),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 22),
+                            PremiumTextField(
+                              controller: _email,
+                              label: 'Email',
+                              hint: 'name@example.com',
+                              prefixIcon: Icons.alternate_email_rounded,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              validator: (v) {
+                                final value = v?.trim() ?? '';
+                                return value.contains('@') && value.contains('.')
+                                    ? null
+                                    : 'Δώσε έγκυρο email';
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            PremiumTextField(
+                              controller: _pass,
+                              label: 'Κωδικός',
+                              hint: 'Τουλάχιστον 6 χαρακτήρες',
+                              prefixIcon: Icons.lock_outline_rounded,
+                              obscureText: !_showPassword,
+                              textInputAction: TextInputAction.done,
+                              suffixIcon: IconButton(
+                                onPressed: () => setState(() => _showPassword = !_showPassword),
+                                icon: Icon(
+                                  _showPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                ),
+                              ),
+                              validator: (v) => (v == null || v.length < 6)
+                                  ? 'Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες'
+                                  : null,
+                            ),
+                            const SizedBox(height: 22),
+                            PremiumPrimaryButton(
+                              label: _loginMode ? 'Σύνδεση στο e-Cut' : 'Δημιουργία λογαριασμού',
+                              icon: _loginMode ? Icons.arrow_forward_rounded : Icons.auto_awesome_rounded,
+                              loading: _loading,
+                              onPressed: _loading ? null : _submit,
+                            ),
+                            const SizedBox(height: 18),
+                            Text(
+                              _loginMode
+                                  ? 'Με τη σύνδεση συνεχίζεις στο προσωπικό σου beauty concierge.'
+                                  : 'Η εγγραφή ολοκληρώνεται άμεσα και μπορείς να κλείσεις ραντεβού αμέσως.',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.verified_rounded, size: 18, color: ECutColors.roseGold),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Curated beauty & wellness bookings',
+                          style: theme.textTheme.labelMedium?.copyWith(color: ECutColors.inkSoft),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 32),
-                TextFormField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Δώσε έγκυρο email' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _pass,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Κωδικός', border: OutlineInputBorder()),
-                  validator: (v) => (v == null || v.length < 6) ? 'Τουλάχιστον 6 χαρακτήρες' : null,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _submit,
-                    child: Text(_loginMode ? 'Σύνδεση' : 'Εγγραφή', style: const TextStyle(fontSize: 16)),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => setState(() => _loginMode = !_loginMode),
-                  child: Text(_loginMode ? 'Δεν έχεις λογαριασμό; Εγγράψου'
-                                         : 'Έχεις λογαριασμό; Σύνδεση'),
-                ),
-              ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthModePill extends StatelessWidget {
+  const _AuthModePill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          height: 46,
+          decoration: BoxDecoration(
+            color: selected ? ECutColors.plum : ECutColors.porcelain,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected ? ECutColors.plum : ECutColors.border,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : ECutColors.inkSoft,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ),
@@ -357,24 +492,9 @@ class _MainLayoutState extends State<MainLayout> {
         children: _pages,
       ),
       
-      // --- H ΚΑΤΩ ΜΠΑΡΑ (efood Style) ---
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Αρχική'),
-            BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Αναζήτηση'),
-            BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Ραντεβού'),
-          ],
-        ),
+      bottomNavigationBar: PremiumBottomNav(
+        selectedIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
@@ -716,19 +836,25 @@ class StoreListScreen extends StatefulWidget {
 }
 
 class _StoreListScreenState extends State<StoreListScreen> {
+  double _readRating(Map<String, dynamic> data) {
+    final raw = data['rating'];
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw?.toString() ?? '') ?? 0.0;
+  }
+
+  List<dynamic> _readServices(Map<String, dynamic> data) {
+    final raw = data['services'];
+    return raw is List ? raw : <dynamic>[];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ECutColors.ivory,
       appBar: AppBar(
-        title: Text('Καταστήματα: ${widget.serviceName}'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+        title: Text(widget.serviceName),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Ψάχνουμε τα μαγαζιά που έχουν τη συγκεκριμένη υπηρεσία
-        // ΠΡΟΣΟΧΗ: Αυτό δουλεύει αν στο Firebase τα services είναι λίστα με ονόματα ['Κούρεμα', 'Ξύρισμα']
         stream: FirebaseFirestore.instance
             .collection('stores')
             .where('services', arrayContains: widget.serviceName)
@@ -737,105 +863,63 @@ class _StoreListScreenState extends State<StoreListScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
+          if (snapshot.hasError) {
+            return const PremiumEmptyState(
+              icon: Icons.error_outline_rounded,
+              title: 'Κάτι πήγε στραβά',
+              message: 'Δεν μπορέσαμε να φορτώσουμε τα διαθέσιμα καταστήματα.',
+            );
+          }
+
           final docs = snapshot.data?.docs ?? [];
 
           if (docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.search_off, size: 60, color: Colors.grey),
-                  const SizedBox(height: 10),
-                  Text('Δεν βρέθηκαν μαγαζιά για ${widget.serviceName}'),
-                ],
-              ),
+            return PremiumEmptyState(
+              icon: Icons.spa_outlined,
+              title: 'Δεν βρέθηκαν καταστήματα',
+              message: 'Δεν υπάρχουν ακόμα συνεργάτες για ${widget.serviceName}. Δοκίμασε άλλη υπηρεσία.',
             );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: docs.length,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 28),
+            itemCount: docs.length + 1,
             itemBuilder: (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
-              
-              final String image = data['photoUrl'] ?? 'https://via.placeholder.com/150';
-              final String name = data['name'] ?? 'Άγνωστο Μαγαζί';
-              final double rating = (data['rating'] ?? 0.0).toDouble();
-              
-              // Τραβάμε τις υπηρεσίες για να τις στείλουμε στην επόμενη οθόνη
-              List<dynamic> storeServices = [];
-              if (data['services'] != null) {
-                storeServices = data['services'] as List<dynamic>;
+              if (index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 18),
+                  child: PremiumHeroPanel(
+                    title: 'Premium επιλογές για ${widget.serviceName}',
+                    subtitle: '${docs.length} διαθέσιμα καταστήματα κοντά σου',
+                    icon: Icons.storefront_rounded,
+                  ),
+                );
               }
 
-              return Card(
-                elevation: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () {
-                    // --- Η ΜΕΓΑΛΗ ΑΛΛΑΓΗ ΕΔΩ ---
-                    // Πάμε πρώτα στον Τιμοκατάλογο (StoreServicesScreen)
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => StoreServicesScreen(
-                          storeName: name, 
-                          services: storeServices, // Στέλνουμε τη λίστα που πήραμε από το Firebase
-                        ),
+              final data = docs[index - 1].data() as Map<String, dynamic>;
+              final image = (data['photoUrl'] ?? 'https://via.placeholder.com/600x400').toString();
+              final name = (data['name'] ?? 'Άγνωστο Μαγαζί').toString();
+              final rating = _readRating(data);
+              final storeServices = _readServices(data);
+
+              return PremiumStoreCard(
+                name: name,
+                imageUrl: image,
+                rating: rating,
+                subtitle: '1.2 χλμ μακριά • Ανοιχτά τώρα',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => StoreServicesScreen(
+                        storeName: name,
+                        services: storeServices,
                       ),
-                    );
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Εικόνα
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                        child: Image.network(
-                          image,
-                          height: 150,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, stack) => Container(
-                            height: 150, color: Colors.grey[300], 
-                            child: const Icon(Icons.store, size: 50, color: Colors.grey),
-                          ),
-                        ),
-                      ),
-                      // Πληροφορίες
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.star, size: 14, color: Colors.white),
-                                      const SizedBox(width: 4),
-                                      Text(rating.toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            const Text('1.2 χλμ μακριά • Ανοιχτά', style: TextStyle(color: Colors.grey)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -844,8 +928,7 @@ class _StoreListScreenState extends State<StoreListScreen> {
     );
   }
 }
-/// ---------------- SELECT STAFF SCREEN (ΝΕΑ ΟΘΟΝΗ) ----------------
-/// ---------------- SELECT STAFF SCREEN (ΜΕ ΕΞΥΠΝΟ ΦΙΛΤΡΟ) ----------------
+/// ---------------- SELECT STAFF SCREEN (PREMIUM) ----------------
 class SelectStaffScreen extends StatelessWidget {
   final String storeName;
   final String serviceName;
@@ -856,126 +939,135 @@ class SelectStaffScreen extends StatelessWidget {
     required this.serviceName,
   });
 
-  // --- Η ΛΟΓΙΚΗ ΤΟΥ ΦΙΛΤΡΟΥ ---
   bool _isEmployeeSuitable(String role, String service) {
-    // Μετατροπή σε πεζά για εύκολη σύγκριση
     final r = role.toLowerCase();
     final s = service.toLowerCase();
 
-    // 1. Αν η υπηρεσία είναι Κούρεμα ή Χτένισμα
     if (s.contains('κούρεμα') || s.contains('χτένισμα')) {
-      // Δεκτοί: Barber, Stylist, Κομμωτής
-      return r.contains('barber') || r.contains('stylist') || r.contains('κομμωτ'); 
+      return r.contains('barber') || r.contains('stylist') || r.contains('κομμωτ');
     }
-
-    // 2. Αν η υπηρεσία είναι Ξύρισμα
     if (s.contains('ξύρισμα')) {
-      // Δεκτοί: Barber
       return r.contains('barber') || r.contains('κουρέας');
     }
-
-    // 3. Αν η υπηρεσία είναι Βαφή
     if (s.contains('βαφή')) {
-      // Δεκτοί: Colorist, Stylist (συχνά κάνουν και βαφές)
       return r.contains('colorist') || r.contains('stylist');
     }
-
-    // 4. Αν η υπηρεσία είναι Περιποίηση
     if (s.contains('περιποίηση') || s.contains('θεραπεία')) {
-      // Δεκτοί: Beauty, Expert, Esthetician, Barber (για περιποίηση γενειάδας)
       return r.contains('beauty') || r.contains('expert') || r.contains('barber');
     }
-
-    // 5. Αν δεν ταιριάζει σε κανένα κανόνα (π.χ. "Κράτηση"), τους δείχνουμε όλους
     return true;
+  }
+
+  String _initial(String name) {
+    final trimmed = name.trim();
+    return trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: ECutColors.ivory,
       appBar: AppBar(
-        title: const Text('Επιλογή Επαγγελματία'),
-        backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
+        title: const Text('Επιλογή επαγγελματία'),
       ),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: AppColors.primarySoft,
-            width: double.infinity,
-            child: Text(
-              'Ποιον προτιμάτε για $serviceName;',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
+            child: PremiumHeroPanel(
+              title: serviceName,
+              subtitle: 'Διάλεξε τον επαγγελματία που ταιριάζει καλύτερα στην υπηρεσία σου.',
+              icon: Icons.badge_outlined,
             ),
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('staff_members')
-                  .where('storeName', isEqualTo: storeName) 
+                  .where('storeName', isEqualTo: storeName)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
                 final allDocs = snapshot.data!.docs;
-                
-                // --- ΕΔΩ ΕΦΑΡΜΟΖΟΥΜΕ ΤΟ ΦΙΛΤΡΟ ---
                 final filteredDocs = allDocs.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
-                  final role = data['role'] ?? '';
-                  // Καλούμε τη συνάρτηση που φτιάξαμε πάνω
+                  final role = (data['role'] ?? '').toString();
                   return _isEmployeeSuitable(role, serviceName);
                 }).toList();
 
                 if (filteredDocs.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Text(
-                        'Δεν βρέθηκαν εξειδικευμένοι συνεργάτες για "$serviceName".',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    ),
+                  return PremiumEmptyState(
+                    icon: Icons.people_outline_rounded,
+                    title: 'Δεν βρέθηκε διαθέσιμος συνεργάτης',
+                    message: 'Δεν υπάρχουν εξειδικευμένοι συνεργάτες για "$serviceName" αυτή τη στιγμή.',
                   );
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
                   itemCount: filteredDocs.length,
                   itemBuilder: (context, index) {
                     final data = filteredDocs[index].data() as Map<String, dynamic>;
-                    final staffName = data['name'];
-                    final staffRole = data['role'];
+                    final staffName = (data['name'] ?? 'Συνεργάτης').toString();
+                    final staffRole = (data['role'] ?? 'Beauty Expert').toString();
 
-                    return Card(
-                      elevation: 3,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(16),
-                        leading: CircleAvatar(
-                          radius: 25,
-                          backgroundColor: AppColors.primarySoft2,
-                          child: Text(staffName[0], style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        ),
-                        title: Text(staffName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        subtitle: Text(staffRole),
-                        trailing: const Icon(Icons.arrow_forward_ios, color: AppColors.primary),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BookingScreen(
-                                storeName: storeName,
-                                serviceName: serviceName,
-                                staffName: staffName,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(ECutRadius.lg),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(ECutRadius.lg),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BookingScreen(
+                                  storeName: storeName,
+                                  serviceName: serviceName,
+                                  staffName: staffName,
+                                ),
                               ),
+                            );
+                          },
+                          child: PremiumSurface(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              children: [
+                                DecoratedBox(
+                                  decoration: const BoxDecoration(
+                                    gradient: ECutColors.goldGradient,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: SizedBox(
+                                    width: 58,
+                                    height: 58,
+                                    child: Center(
+                                      child: Text(
+                                        _initial(staffName),
+                                        style: const TextStyle(color: ECutColors.plumDeep, fontSize: 22, fontWeight: FontWeight.w900),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(staffName, style: Theme.of(context).textTheme.titleMedium),
+                                      const SizedBox(height: 4),
+                                      Text(staffRole, style: Theme.of(context).textTheme.bodyMedium),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_forward_ios_rounded, color: ECutColors.plum, size: 16),
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -1589,7 +1681,7 @@ class MyBookingsScreen extends StatelessWidget {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Icon(Icons.cut, size: 16, color: Colors.grey),
+                                  const Icon(Icons.content_cut, size: 16, color: Colors.grey),
                                   const SizedBox(width: 6),
                                   Text(data['serviceName'] ?? ''),
                                 ],
@@ -1772,6 +1864,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class UserBookingsScreen extends StatelessWidget {
   const UserBookingsScreen({super.key});
 
+  Color _statusColor(String status) {
+    if (status == 'confirmed') return ECutColors.success;
+    if (status == 'canceled') return ECutColors.danger;
+    return ECutColors.warning;
+  }
+
+  String _statusText(String status) {
+    if (status == 'confirmed') return 'ΕΓΚΡΙΘΗΚΕ';
+    if (status == 'canceled') return 'ΑΚΥΡΩΘΗΚΕ';
+    return 'ΕΚΚΡΕΜΕΙ';
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -1779,115 +1883,112 @@ class UserBookingsScreen extends StatelessWidget {
     if (user == null) return const Scaffold(body: Center(child: Text('Πρέπει να συνδεθείτε.')));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Τα Ραντεβού μου'),
-        backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
-      ),
+      backgroundColor: ECutColors.ivory,
+      appBar: AppBar(title: const Text('Τα ραντεβού μου')),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('bookings')
-            .where('userId', isEqualTo: user.uid) // Φίλτρο: Μόνο τα δικά μου
-            .orderBy('createdAt', descending: true) // Τα πιο πρόσφατα πάνω
+            .where('userId', isEqualTo: user.uid)
+            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return const PremiumEmptyState(
+              icon: Icons.error_outline_rounded,
+              title: 'Δεν φορτώθηκαν τα ραντεβού',
+              message: 'Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.',
+            );
+          }
 
           final docs = snapshot.data?.docs ?? [];
 
           if (docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.calendar_today, size: 80, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text('Δεν έχετε κλείσει ραντεβού ακόμα.', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                ],
-              ),
+            return const PremiumEmptyState(
+              icon: Icons.calendar_today_outlined,
+              title: 'Δεν έχεις ραντεβού ακόμα',
+              message: 'Κλείσε την πρώτη σου premium υπηρεσία και θα εμφανιστεί εδώ.',
             );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
-              final status = data['status'] ?? 'pending';
-              
-              // ΕΔΩ ΕΙΝΑΙ ΤΟ ΚΛΕΙΔΙ: Εμφανίζουμε τον υπάλληλο
-              final staffName = data['staffName'] ?? 'Χωρίς επιλογή'; 
+              final status = (data['status'] ?? 'pending').toString();
+              final color = _statusColor(status);
+              final staffName = (data['staffName'] ?? 'Χωρίς επιλογή').toString();
+              final storeName = (data['storeName'] ?? '').toString();
+              final serviceName = (data['serviceName'] ?? '').toString();
+              final date = (data['date'] ?? '').toString();
+              final time = (data['time'] ?? '').toString();
 
-              Color color;
-              String statusText;
-              
-              if (status == 'confirmed') {
-                color = Colors.green;
-                statusText = 'ΕΓΚΡΙΘΗΚΕ';
-              } else if (status == 'canceled') {
-                color = Colors.red;
-                statusText = 'ΑΚΥΡΩΘΗΚΕ';
-              } else {
-                color = Colors.orange;
-                statusText = 'ΕΚΚΡΕΜΕΙ';
-              }
-
-              return Card(
-                elevation: 3,
-                margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: PremiumSurface(
+                  padding: EdgeInsets.zero,
+                  child: Row(
                     children: [
-                      // Ημερομηνία και Status
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(data['date'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                            child: Text(statusText, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+                      Container(
+                        width: 6,
+                        height: 144,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(ECutRadius.lg),
+                            bottomLeft: Radius.circular(ECutRadius.lg),
                           ),
-                        ],
-                      ),
-                      const Divider(),
-                      // Λεπτομέρειες
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
-                          child: const Icon(Icons.store, color: AppColors.primary),
                         ),
-                        title: Text(data['storeName'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 5),
-                            Text(data['serviceName'], style: const TextStyle(fontSize: 15)),
-                            const SizedBox(height: 5),
-                            // Όνομα Υπαλλήλου
-                            Row(
-                              children: [
-                                Icon(Icons.person, size: 16, color: Colors.grey[700]),
-                                const SizedBox(width: 5),
-                                Text('Με: $staffName', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            // Ώρα
-                            Row(
-                              children: [
-                                Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                                const SizedBox(width: 5),
-                                Text(data['time']),
-                              ],
-                            ),
-                          ],
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      storeName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                  ),
+                                  PremiumStatusPill(label: _statusText(status), color: color),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  const Icon(Icons.spa_rounded, size: 17, color: ECutColors.muted),
+                                  const SizedBox(width: 7),
+                                  Expanded(child: Text(serviceName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: ECutColors.ink))),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.person_outline_rounded, size: 17, color: ECutColors.muted),
+                                  const SizedBox(width: 7),
+                                  Expanded(child: Text('Με: $staffName', style: Theme.of(context).textTheme.bodyMedium)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.schedule_rounded, size: 17, color: ECutColors.muted),
+                                  const SizedBox(width: 7),
+                                  Text('$date • $time', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: ECutColors.plum)),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -1900,7 +2001,8 @@ class UserBookingsScreen extends StatelessWidget {
       ),
     );
   }
-}/// ---------------- ΟΘΟΝΗ ΑΝΑΖΗΤΗΣΗΣ (SEARCH SCREEN) ----------------
+}
+/// ---------------- ΟΘΟΝΗ ΑΝΑΖΗΤΗΣΗΣ (SEARCH SCREEN) ----------------
 class StoreSearchScreen extends StatefulWidget {
   const StoreSearchScreen({super.key});
 
@@ -1909,110 +2011,116 @@ class StoreSearchScreen extends StatefulWidget {
 }
 
 class _StoreSearchScreenState extends State<StoreSearchScreen> {
-  String _searchQuery = "";
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  double _readRating(Map<String, dynamic> data) {
+    final raw = data['rating'];
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw?.toString() ?? '') ?? 0.0;
+  }
+
+  List<dynamic> _readServices(Map<String, dynamic> data) {
+    final raw = data['services'];
+    return raw is List ? raw : <dynamic>[];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
-        title: TextField(
-          autofocus: true, // Ανοίγει το πληκτρολόγιο αμέσως
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-          cursorColor: Colors.white,
-          decoration: const InputDecoration(
-            hintText: 'Αναζήτηση καταστήματος...',
-            hintStyle: TextStyle(color: Colors.white70),
-            border: InputBorder.none,
-          ),
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value.toLowerCase();
-            });
-          },
-        ),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('stores').snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final allStores = snapshot.data!.docs;
-          
-          // Φιλτράρισμα αποτελεσμάτων τοπικά
-          final filteredStores = allStores.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final name = data['name'].toString().toLowerCase();
-            return name.contains(_searchQuery);
-          }).toList();
-
-          if (filteredStores.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.search_off, size: 60, color: Colors.grey),
-                  const SizedBox(height: 10),
-                  Text(
-                    _searchQuery.isEmpty ? 'Πληκτρολογήστε όνομα...' : 'Δεν βρέθηκε κατάστημα.',
-                    style: const TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: filteredStores.length,
-            itemBuilder: (context, index) {
-              final data = filteredStores[index].data() as Map<String, dynamic>;
-              final name = data['name'];
-              final image = data['photoUrl'] ?? 'https://via.placeholder.com/150';
-              final rating = (data['rating'] ?? 0.0).toDouble();
-
-              return Card(
-                elevation: 3,
-                margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(10),
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(image, width: 60, height: 60, fit: BoxFit.cover,
-                      errorBuilder: (c, e, s) => Container(width: 60, height: 60, color: Colors.grey[300], child: const Icon(Icons.store)),
-                    ),
-                  ),
-                  title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Row(
-                    children: [
-                      const Icon(Icons.star, size: 16, color: Colors.orange),
-                      const SizedBox(width: 4),
-                      Text(rating.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primary),
-                  onTap: () {
-                    // Όταν πατάς στο μαγαζί από την αναζήτηση,
-                    // σε πάει να διαλέξεις προσωπικό για "Γενική Κράτηση"
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => SelectStaffScreen(
-                          storeName: name,
-                          serviceName: 'Κράτηση', // Default όνομα επειδή δεν διάλεξε υπηρεσία
+      backgroundColor: ECutColors.ivory,
+      appBar: AppBar(title: const Text('Αναζήτηση')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+            child: PremiumSurface(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                cursorColor: ECutColors.plum,
+                style: const TextStyle(color: ECutColors.ink, fontSize: 16, fontWeight: FontWeight.w700),
+                decoration: InputDecoration(
+                  hintText: 'Αναζήτησε κατάστημα ή υπηρεσία',
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  prefixIcon: const Icon(Icons.search_rounded, color: ECutColors.plum),
+                  suffixIcon: _searchQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
                         ),
-                      ),
+                ),
+                onChanged: (value) => setState(() => _searchQuery = value.toLowerCase().trim()),
+              ),
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('stores').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+                final allStores = snapshot.data!.docs;
+                final filteredStores = allStores.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final name = (data['name'] ?? '').toString().toLowerCase();
+                  final services = _readServices(data).join(' ').toLowerCase();
+                  return _searchQuery.isEmpty || name.contains(_searchQuery) || services.contains(_searchQuery);
+                }).toList();
+
+                if (filteredStores.isEmpty) {
+                  return const PremiumEmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: 'Δεν βρέθηκε αποτέλεσμα',
+                    message: 'Δοκίμασε διαφορετική λέξη-κλειδί ή αναζήτησε με όνομα υπηρεσίας.',
+                  );
+                }
+
+                return ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                  itemCount: filteredStores.length,
+                  itemBuilder: (context, index) {
+                    final data = filteredStores[index].data() as Map<String, dynamic>;
+                    final name = (data['name'] ?? 'Άγνωστο Μαγαζί').toString();
+                    final image = (data['photoUrl'] ?? 'https://via.placeholder.com/600x400').toString();
+                    final rating = _readRating(data);
+                    final services = _readServices(data);
+
+                    return PremiumStoreCard(
+                      name: name,
+                      imageUrl: image,
+                      rating: rating,
+                      subtitle: services.isEmpty ? 'Beauty & wellness partner' : services.take(3).join(' • '),
+                      compact: true,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => StoreServicesScreen(storeName: name, services: services),
+                          ),
+                        );
+                      },
                     );
                   },
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2020,18 +2128,16 @@ class _StoreSearchScreenState extends State<StoreSearchScreen> {
 /// ---------------- ΝΕΑ ΟΘΟΝΗ: ΤΙΜΟΚΑΤΑΛΟΓΟΣ (StoreServicesScreen) ----------------
 class StoreServicesScreen extends StatelessWidget {
   final String storeName;
-  final List<dynamic> services; // Η λίστα με τα ονόματα ("Κούρεμα", "Ξύρισμα")
+  final List<dynamic> services;
 
   const StoreServicesScreen({
-    super.key, 
-    required this.storeName, 
-    required this.services
+    super.key,
+    required this.storeName,
+    required this.services,
   });
 
   @override
   Widget build(BuildContext context) {
-    // --- Ο "ΚΕΝΤΡΙΚΟΣ ΚΑΤΑΛΟΓΟΣ" ΓΙΑ ΤΟ DEMO ---
-    // Εδώ βάζουμε τις τιμές που θέλουμε να φαίνονται, αφού στο Firebase έχουμε μόνο ονόματα.
     final Map<String, Map<String, dynamic>> catalog = {
       'Κούρεμα': {'price': '15€', 'duration': '45\'', 'icon': Icons.content_cut},
       'Ξύρισμα': {'price': '10€', 'duration': '30\'', 'icon': Icons.face},
@@ -2041,65 +2147,99 @@ class StoreServicesScreen extends StatelessWidget {
     };
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          children: [
-            Text(storeName, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const Text('Τιμοκατάλογος', style: TextStyle(fontSize: 12, color: Colors.grey)),
-          ],
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      body: services.isEmpty 
-          ? const Center(child: Text("Δεν βρέθηκαν υπηρεσίες.")) 
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: services.length,
-              separatorBuilder: (ctx, i) => const Divider(),
+      backgroundColor: ECutColors.ivory,
+      appBar: AppBar(title: const Text('Τιμοκατάλογος')),
+      body: services.isEmpty
+          ? const PremiumEmptyState(
+              icon: Icons.spa_outlined,
+              title: 'Δεν βρέθηκαν υπηρεσίες',
+              message: 'Το κατάστημα δεν έχει δηλώσει ακόμα τιμοκατάλογο.',
+            )
+          : ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 28),
+              itemCount: services.length + 1,
               itemBuilder: (context, index) {
-                // 1. Παίρνουμε το όνομα από το Firebase (π.χ. "Κούρεμα")
-                final serviceName = services[index].toString();
-                
-                // 2. Βρίσκουμε την τιμή από τον κατάλογό μας
-                // Αν δεν υπάρχει στον κατάλογο, βάζουμε παύλα (-)
-                final details = catalog[serviceName] ?? {'price': '-', 'duration': '-', 'icon': Icons.stars};
+                if (index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 18),
+                    child: PremiumHeroPanel(
+                      title: storeName,
+                      subtitle: 'Διάλεξε υπηρεσία και συνέχισε με επαγγελματία και ώρα.',
+                      icon: Icons.menu_book_rounded,
+                    ),
+                  );
+                }
 
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(10)),
-                    child: Icon(details['icon'] as IconData, color: AppColors.primary),
-                  ),
-                  title: Text(serviceName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Row(
-                      children: [
-                        Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
-                        const SizedBox(width: 4),
-                        Text(details['duration'], style: TextStyle(color: Colors.grey[600])),
-                        const SizedBox(width: 15),
-                        Icon(Icons.euro, size: 14, color: Colors.grey[600]),
-                        const SizedBox(width: 4),
-                        Text(details['price'], style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                      ],
+                final serviceName = services[index - 1].toString();
+                final details = catalog[serviceName] ?? {'price': '-', 'duration': '-', 'icon': Icons.auto_awesome};
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(ECutRadius.lg),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(ECutRadius.lg),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SelectStaffScreen(storeName: storeName, serviceName: serviceName),
+                          ),
+                        );
+                      },
+                      child: PremiumSurface(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: ECutColors.porcelain,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: SizedBox(
+                                width: 54,
+                                height: 54,
+                                child: Icon(details['icon'] as IconData, color: ECutColors.plum),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(serviceName, style: Theme.of(context).textTheme.titleMedium),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.schedule_rounded, size: 15, color: ECutColors.muted),
+                                      const SizedBox(width: 4),
+                                      Text(details['duration'].toString(), style: Theme.of(context).textTheme.bodyMedium),
+                                      const SizedBox(width: 14),
+                                      const Icon(Icons.euro_rounded, size: 15, color: ECutColors.muted),
+                                      const SizedBox(width: 4),
+                                      Text(details['price'].toString(), style: Theme.of(context).textTheme.labelLarge?.copyWith(color: ECutColors.plum)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: ECutColors.plum,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                child: Text('Επιλογή', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20)),
-                    child: const Text('Επιλογή', style: TextStyle(color: Colors.white, fontSize: 12)),
-                  ),
-                  onTap: () {
-                    // 3. Προχωράμε στην επιλογή υπαλλήλου
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => 
-                      SelectStaffScreen(storeName: storeName, serviceName: serviceName)
-                    ));
-                  },
                 );
               },
             ),
