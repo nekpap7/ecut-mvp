@@ -325,7 +325,7 @@ class _SignInPageState extends State<SignInPage> {
                     const SizedBox(height: 10),
                     Text(
                       isRegister
-                          ? 'Δημιούργησε λογαριασμό και ανακάλυψε επιλεγμένες beauty & wellness υπηρεσίες.'
+                          ? 'Δημιούργησε λογαριασμό και ανακάλυψε επιλεγμένες υπηρεσίες ομορφιάς & ευεξίας.'
                           : 'Ανακάλυψε επιλεγμένους επαγγελματίες ομορφιάς, διαθεσιμότητα και ραντεβού σε λίγα δευτερόλεπτα.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyLarge,
@@ -416,7 +416,7 @@ class _SignInPageState extends State<SignInPage> {
                         Icon(Icons.verified_rounded, size: 18, color: ECutColors.roseGold),
                         const SizedBox(width: 8),
                         Text(
-                          'Επιλεγμένες κρατήσεις ομορφιάς & wellness',
+                          'Επιλεγμένες κρατήσεις ομορφιάς & ευεξίας',
                           style: theme.textTheme.labelMedium?.copyWith(color: ECutColors.inkSoft),
                         ),
                       ],
@@ -674,7 +674,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
           children: [
             Icon(Icons.local_offer_rounded, color: ECutColors.roseGold),
             SizedBox(width: 10),
-            Text('Ιδιωτικό προνόμιο'),
+            Text('Προνόμιο μέλους'),
           ],
         ),
         content: Column(
@@ -723,7 +723,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
         child: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 156),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 188),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -810,12 +810,12 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                           ),
                           const SizedBox(height: 22),
                           Text(
-                            'Κλείσε υπηρεσίες ομορφιάς με premium εμπειρία.',
+                            'Κλείσε το επόμενο ραντεβού ομορφιάς σου.',
                             style: Theme.of(context).textTheme.displayMedium?.copyWith(color: Colors.white),
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Ανακάλυψε επιλεγμένους επαγγελματίες, διάλεξε υπηρεσία και κλείσε ραντεβού σε λίγα λεπτά.',
+                            'Ανακάλυψε επιλεγμένους επαγγελματίες, διάλεξε υπηρεσία και ολοκλήρωσε την κράτηση σε λίγα λεπτά.',
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white.withValues(alpha: 0.74)),
                           ),
                           const SizedBox(height: 20),
@@ -823,7 +823,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                             children: const [
                               PremiumStatPill(value: '4.9', label: 'αξιολόγηση', icon: Icons.star_rounded, dark: true),
                               SizedBox(width: 10),
-                              PremiumStatPill(value: '30λ', label: 'άμεσες ώρες', icon: Icons.schedule_rounded, dark: true),
+                              PremiumStatPill(value: '30λ', label: 'κράτηση', icon: Icons.schedule_rounded, dark: true),
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -836,7 +836,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                           TextButton.icon(
                             onPressed: _showOfferDialog,
                             icon: const Icon(Icons.card_giftcard_rounded, color: ECutColors.roseGold),
-                            label: const Text('Δες τον ιδιωτικό κωδικό έκπτωσης'),
+                            label: const Text('Κωδικός έκπτωσης μέλους'),
                             style: TextButton.styleFrom(foregroundColor: Colors.white),
                           ),
                         ],
@@ -853,7 +853,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                 _buildEntrance(
                   order: 3,
                   child: const PremiumSectionHeader(
-                    eyebrow: 'Ομορφιά & wellness',
+                    eyebrow: 'Ομορφιά & ευεξία',
                     title: 'Τι χρειάζεσαι σήμερα;',
                     subtitle: 'Γρήγορη επιλογή υπηρεσίας με επιλεγμένους συνεργάτες.',
                   ),
@@ -926,7 +926,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                             final image = (data['photoUrl'] ?? 'https://via.placeholder.com/700x500').toString();
                             final rating = _readRating(data);
                             final storeServices = _readServices(data);
-                            final subtitle = storeServices.isEmpty ? 'Στούντιο ομορφιάς & wellness' : storeServices.take(2).join(' • ');
+                            final subtitle = storeServices.isEmpty ? 'Στούντιο ομορφιάς & ευεξίας' : storeServices.take(2).join(' • ');
 
                             return PremiumFeaturedStoreCard(
                               name: name,
@@ -1474,7 +1474,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             children: [
                               PremiumStatPill(value: _displayDate(_selectedDate), label: 'ημερομηνία', icon: Icons.calendar_today_rounded, dark: true),
                               const SizedBox(width: 10),
-                              PremiumStatPill(value: _selectedTime ?? '--:--', label: 'ώρα', icon: Icons.schedule_rounded, dark: true),
+                              PremiumStatPill(value: _selectedTime ?? 'Επίλεξε', label: 'ώρα', icon: Icons.schedule_rounded, dark: true),
                             ],
                           ),
                         ],
@@ -1616,7 +1616,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   const SizedBox(height: 18),
                   PremiumPrimaryButton(
-                    label: _selectedTime == null ? 'Επίλεξε ώρα για συνέχεια' : 'Επιβεβαίωση ραντεβού',
+                    label: _selectedTime == null ? 'Διάλεξε διαθέσιμη ώρα' : 'Επιβεβαίωση ραντεβού',
                     icon: Icons.check_rounded,
                     loading: _isLoading,
                     onPressed: (_selectedTime == null) ? null : _confirmBooking,
@@ -2167,7 +2167,7 @@ class UserBookingsScreen extends StatelessWidget {
 
           return ListView.builder(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 132),
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
@@ -2346,10 +2346,31 @@ class _StoreSearchScreenState extends State<StoreSearchScreen> {
 
                 return ListView.builder(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
-                  itemCount: filteredStores.length,
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 132),
+                  itemCount: filteredStores.length + 1,
                   itemBuilder: (context, index) {
-                    final data = filteredStores[index].data() as Map<String, dynamic>;
+                    if (index == 0) {
+                      final title = _searchQuery.isEmpty ? 'Προτεινόμενοι συνεργάτες' : 'Αποτελέσματα αναζήτησης';
+                      final countLabel = filteredStores.length == 1 ? '1 συνεργάτης' : '${filteredStores.length} συνεργάτες';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(title, style: Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              countLabel,
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: ECutColors.roseGold,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    final data = filteredStores[index - 1].data() as Map<String, dynamic>;
                     final name = (data['name'] ?? 'Άγνωστο Μαγαζί').toString();
                     final image = (data['photoUrl'] ?? 'https://via.placeholder.com/600x400').toString();
                     final rating = _readRating(data);
@@ -2359,7 +2380,7 @@ class _StoreSearchScreenState extends State<StoreSearchScreen> {
                       name: name,
                       imageUrl: image,
                       rating: rating,
-                      subtitle: services.isEmpty ? 'Συνεργάτης ομορφιάς & wellness' : services.take(3).join(' • '),
+                      subtitle: services.isEmpty ? 'Συνεργάτης ομορφιάς & ευεξίας' : services.take(3).join(' • '),
                       compact: true,
                       onTap: () {
                         Navigator.push(

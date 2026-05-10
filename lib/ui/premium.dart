@@ -323,55 +323,56 @@ class PremiumPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = onPressed != null && !loading;
+    final disabled = onPressed == null;
+    final canTap = onPressed != null && !loading;
+    final contentColor = disabled ? ECutColors.inkSoft : Colors.white;
 
-    return Opacity(
-      opacity: enabled ? 1 : 0.62,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: ECutColors.brandGradient,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: disabled ? null : ECutColors.brandGradient,
+        color: disabled ? ECutColors.plumDeep.withValues(alpha: 0.12) : null,
+        borderRadius: BorderRadius.circular(ECutRadius.md),
+        border: disabled ? Border.all(color: ECutColors.border) : null,
+        boxShadow: disabled ? null : ECutShadows.lifted,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(ECutRadius.md),
+        child: InkWell(
+          onTap: canTap ? onPressed : null,
           borderRadius: BorderRadius.circular(ECutRadius.md),
-          boxShadow: ECutShadows.lifted,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(ECutRadius.md),
-          child: InkWell(
-            onTap: enabled ? onPressed : null,
-            borderRadius: BorderRadius.circular(ECutRadius.md),
-            child: SizedBox(
-              height: 56,
-              width: double.infinity,
-              child: Center(
-                child: loading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.4,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (icon != null) ...[
-                            Icon(icon, size: 19, color: Colors.white),
-                            const SizedBox(width: 10),
-                          ],
-                          Text(
-                            label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.15,
-                            ),
-                          ),
-                        ],
+          child: SizedBox(
+            height: 56,
+            width: double.infinity,
+            child: Center(
+              child: loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
-              ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icon != null) ...[
+                          Icon(icon, size: 19, color: contentColor),
+                          const SizedBox(width: 10),
+                        ],
+                        Text(
+                          label,
+                          style: TextStyle(
+                            color: contentColor,
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.15,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
