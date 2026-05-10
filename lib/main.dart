@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,7 +7,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firebase_options.dart';
-import 'services/store_service.dart';
 import 'ui/premium.dart';
 
 // 1. Φτιάχνουμε το αντικείμενο των ειδοποιήσεων
@@ -52,9 +52,56 @@ class AppColors {
   );
 }
 
+
+const List<String> _greekMonthsGenitive = [
+  'Ιανουαρίου',
+  'Φεβρουαρίου',
+  'Μαρτίου',
+  'Απριλίου',
+  'Μαΐου',
+  'Ιουνίου',
+  'Ιουλίου',
+  'Αυγούστου',
+  'Σεπτεμβρίου',
+  'Οκτωβρίου',
+  'Νοεμβρίου',
+  'Δεκεμβρίου',
+];
+
+const List<String> _greekWeekdays = [
+  'Δευτέρα',
+  'Τρίτη',
+  'Τετάρτη',
+  'Πέμπτη',
+  'Παρασκευή',
+  'Σάββατο',
+  'Κυριακή',
+];
+
+String _formatGreekDate(DateTime date, {bool includeYear = true, bool includeWeekday = false}) {
+  final month = _greekMonthsGenitive[date.month - 1];
+  final datePart = includeYear ? '${date.day} $month ${date.year}' : '${date.day} $month';
+  if (!includeWeekday) return datePart;
+  return '${_greekWeekdays[date.weekday - 1]} $datePart';
+}
+
+String _formatGreekDateFromIso(String value, {bool includeYear = true, bool includeWeekday = true}) {
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) return value;
+  return _formatGreekDate(parsed, includeYear: includeYear, includeWeekday: includeWeekday);
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
+  ));
 
   // 2. Ρυθμίσεις για Android & iOS
   const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -113,7 +160,7 @@ class _AuthGateState extends State<AuthGate> {
       for (var change in snapshot.docChanges) {
         if (change.type == DocumentChangeType.modified) {
           
-          print("🔥 ΕΝΤΟΠΙΣΤΗΚΕ ΑΛΛΑΓΗ ΣΤΗ ΒΑΣΗ!"); 
+          debugPrint("🔥 ΕΝΤΟΠΙΣΤΗΚΕ ΑΛΛΑΓΗ ΣΤΗ ΒΑΣΗ!"); 
           
           final data = change.doc.data();
           if (data != null) {
@@ -129,7 +176,7 @@ class _AuthGateState extends State<AuthGate> {
 
   // Συνάρτηση που εμφανίζει το μήνυμα στο κινητό
   Future<void> _showNotification(String title, String body) async {
-    print("🔔 ΠΡΟΣΠΑΘΕΙΑ ΕΙΔΟΠΟΙΗΣΗΣ: $title"); 
+    debugPrint("🔔 ΠΡΟΣΠΑΘΕΙΑ ΕΙΔΟΠΟΙΗΣΗΣ: $title"); 
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'booking_channel', 'Booking Updates',
@@ -254,9 +301,9 @@ class _SignInPageState extends State<SignInPage> {
                       alignment: Alignment.center,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.78),
+                          color: Colors.white.withValues(alpha: 0.78),
                           borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: Colors.white.withOpacity(0.88)),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.88)),
                           boxShadow: ECutShadows.soft,
                         ),
                         child: Padding(
@@ -279,7 +326,7 @@ class _SignInPageState extends State<SignInPage> {
                     Text(
                       isRegister
                           ? 'Δημιούργησε λογαριασμό και ανακάλυψε επιλεγμένες beauty & wellness υπηρεσίες.'
-                          : 'Ανακάλυψε curated επαγγελματίες ομορφιάς, διαθεσιμότητα και ραντεβού σε λίγα δευτερόλεπτα.',
+                          : 'Ανακάλυψε επιλεγμένους επαγγελματίες ομορφιάς, διαθεσιμότητα και ραντεβού σε λίγα δευτερόλεπτα.',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyLarge,
                     ),
@@ -353,7 +400,7 @@ class _SignInPageState extends State<SignInPage> {
                             const SizedBox(height: 18),
                             Text(
                               _loginMode
-                                  ? 'Με τη σύνδεση συνεχίζεις στο προσωπικό σου beauty concierge.'
+                                  ? 'Με τη σύνδεση συνεχίζεις στην προσωπική σου εμπειρία ομορφιάς.'
                                   : 'Η εγγραφή ολοκληρώνεται άμεσα και μπορείς να κλείσεις ραντεβού αμέσως.',
                               textAlign: TextAlign.center,
                               style: theme.textTheme.bodyMedium,
@@ -369,7 +416,7 @@ class _SignInPageState extends State<SignInPage> {
                         Icon(Icons.verified_rounded, size: 18, color: ECutColors.roseGold),
                         const SizedBox(width: 8),
                         Text(
-                          'Curated beauty & wellness bookings',
+                          'Επιλεγμένες κρατήσεις ομορφιάς & wellness',
                           style: theme.textTheme.labelMedium?.copyWith(color: ECutColors.inkSoft),
                         ),
                       ],
@@ -434,6 +481,7 @@ class _AuthModePill extends StatelessWidget {
 class LocationHelper {
   static Future<Position?> getCurrentPosition(BuildContext context) async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!context.mounted) return null;
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ενεργοποίησε το GPS για κοντινά καταστήματα')),
@@ -441,16 +489,20 @@ class LocationHelper {
       return null;
     }
     var permission = await Geolocator.checkPermission();
+    if (!context.mounted) return null;
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
+    if (!context.mounted) return null;
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Δεν δόθηκε άδεια τοποθεσίας')),
       );
       return null;
     }
-    return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium);
+    return Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+    );
   }
 
   static double distanceKm(double lat1, double lng1, double lat2, double lng2) {
@@ -510,13 +562,6 @@ class HomeContent extends StatefulWidget {
 
 class _HomeContentState extends State<HomeContent> with SingleTickerProviderStateMixin {
   late final AnimationController _introController;
-  static const BorderRadius _premiumRadius = BorderRadius.all(Radius.circular(20));
-  static const BoxShadow _premiumShadow = BoxShadow(
-    color: Color(0x14000000),
-    blurRadius: 18,
-    offset: Offset(0, 8),
-  );
-  
   // --- ΚΩΔΙΚΑΣ ΕΙΔΟΠΟΙΗΣΕΩΝ (Κρατήσαμε τον δικό σου) ---
   @override
   void initState() {
@@ -605,222 +650,339 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
     );
   }
 
+  double _readRating(Map<String, dynamic> data) {
+    final raw = data['rating'];
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw?.toString() ?? '') ?? 0.0;
+  }
+
+  List<dynamic> _readServices(Map<String, dynamic> data) {
+    final raw = data['services'];
+    return raw is List ? raw : <dynamic>[];
+  }
+
+  void _openSearch() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const StoreSearchScreen()));
+  }
+
+  void _showOfferDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: const Row(
+          children: [
+            Icon(Icons.local_offer_rounded, color: ECutColors.roseGold),
+            SizedBox(width: 10),
+            Text('Ιδιωτικό προνόμιο'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Κράτησε 20% έκπτωση για το επόμενο ραντεβού ομορφιάς σου.',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 18),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: ECutColors.goldGradient,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+                child: Center(
+                  child: Text(
+                    'ECUT2026',
+                    style: TextStyle(
+                      color: ECutColors.plumDeep,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Τέλεια')),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundGrouped,
-      appBar: AppBar(
-        elevation: 0,
-        // ΤΟ ΛΟΓΟΤΥΠΟ ΣΟΥ
-        title: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Image.asset(
-            'assets/images/logo.png',
-            height: 34,
-            fit: BoxFit.contain,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white, 
-        foregroundColor: Colors.black, 
-        actions: [
-          IconButton(icon: const Icon(Icons.logout, color: AppColors.primary), onPressed: () => FirebaseAuth.instance.signOut()),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- 1. BANNER ΠΡΟΣΦΟΡΑΣ (Με το Popup που φτιάξαμε) ---
-            _buildEntrance(
-              order: 0,
-              child: Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryLight]),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [BoxShadow(color: Color(0x294A0F66), blurRadius: 20, offset: Offset(0, 10))],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Καλώς ήρθατε!', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70)),
-                  const SizedBox(height: 5),
-                  Text(
-                    'Κλείστε ραντεβού\nμε έκπτωση 20%',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                    onPressed: () {
-                       showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          title: const Row(children: [Icon(Icons.card_giftcard, color: AppColors.primary), SizedBox(width: 10), Text('Δώρο για εσάς!')]),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
+      backgroundColor: ECutColors.ivory,
+      body: PremiumAppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 156),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildEntrance(
+                  order: 0,
+                  child: SizedBox(
+                    height: 48,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Center(
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            height: 44,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          child: Row(
                             children: [
-                              const Text('Κερδίστε 20% έκπτωση στο επόμενο κούρεμα!', style: TextStyle(fontSize: 16)),
-                              const SizedBox(height: 20),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.primarySoft2)),
-                                child: const Text('ΚΩΔΙΚΟΣ: ECUT2024', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.primary, letterSpacing: 1.5)),
+                              IconButton.filledTonal(
+                                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+                                icon: const Icon(Icons.person_outline_rounded),
+                                color: ECutColors.plum,
+                              ),
+                              const SizedBox(width: 4),
+                              IconButton(
+                                onPressed: () => FirebaseAuth.instance.signOut(),
+                                icon: const Icon(Icons.logout_rounded),
+                                color: ECutColors.muted,
                               ),
                             ],
                           ),
-                          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Τέλεια!'))],
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: AppColors.primary),
-                    child: const Text('Δείτε τον Κωδικό'),
-                  )
-                ],
-              ),
-            )),
-
-            // --- 2. ΥΠΗΡΕΣΙΕΣ (GRID) ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text('Τι ψάχνετε σήμερα;', style: Theme.of(context).textTheme.titleLarge),
-            ),
-            _buildEntrance(
-              order: 1,
-              child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4, // 4 στη σειρά (Chips style)
-                mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 0.8,
-              ),
-              itemCount: services.length,
-              itemBuilder: (context, index) {
-                return Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: const BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: _premiumRadius,
-                        boxShadow: [_premiumShadow],
-                      ),
-                      child: InkWell(
-                        borderRadius: _premiumRadius,
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StoreListScreen(serviceName: services[index]['name']))),
-                        child: Icon(services[index]['icon'], color: services[index]['color']),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 5),
-                    Text(
-                      services[index]['name'],
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.textSecondary),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _buildEntrance(
+                  order: 1,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: ECutColors.brandGradient,
+                      borderRadius: BorderRadius.circular(34),
+                      boxShadow: ECutShadows.lifted,
                     ),
-                  ],
-                );
-              },
-            )),
-
-            // --- 3. ΔΗΜΟΦΙΛΗ (ΟΡΙΖΟΝΤΙΑ ΛΙΣΤΑ - efood Style) 🌟 ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Text('Δημοφιλή Καταστήματα', style: Theme.of(context).textTheme.titleLarge),
-            ),
-            
-            _buildEntrance(
-              order: 2,
-              child: SizedBox(
-              height: 180, // Το ύψος της οριζόντιας λίστας
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('stores').limit(5).snapshots(), // Φέρνουμε 5 τυχαία
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                  final stores = snapshot.data!.docs;
-                  
-                  if (stores.isEmpty) return const Padding(padding: EdgeInsets.only(left: 16), child: Text("Δεν βρέθηκαν καταστήματα."));
-
-                  return ListView.builder(
-                    scrollDirection: Axis.horizontal, // <--- ΤΟ ΜΥΣΤΙΚΟ ΓΙΑ ΤΟ efood LOOK
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: stores.length,
-                    itemBuilder: (context, index) {
-                      final data = stores[index].data() as Map<String, dynamic>;
-                      // Χρήση εικόνας ή placeholder αν δεν υπάρχει
-                      final imgUrl = data['photoUrl'] ?? 'https://via.placeholder.com/150';
-
-                   return GestureDetector(
-                        onTap: () {
-                           // 1. Τραβάμε τη λίστα υπηρεσιών από το Firebase (όπως κάναμε και πριν)
-                           List<dynamic> storeServices = [];
-                           if (data['services'] != null) {
-                             storeServices = data['services'] as List<dynamic>;
-                           }
-
-                           // 2. Πηγαίνουμε στον Τιμοκατάλογο (StoreServicesScreen)
-                           Navigator.push(context, MaterialPageRoute(builder: (_) => 
-                             StoreServicesScreen(
-                               storeName: data['name'], 
-                               services: storeServices // Στέλνουμε τη λίστα για να δουλέψει ο κατάλογος
-                             )
-                           ));
-                        },
-                        child: Container(
-                          width: 148,
-                          margin: const EdgeInsets.only(right: 14),
-                          decoration: const BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: _premiumRadius,
-                            boxShadow: [_premiumShadow],
+                    child: Padding(
+                      padding: const EdgeInsets.all(22),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+                                ),
+                                child: const SizedBox(
+                                  width: 52,
+                                  height: 52,
+                                  child: Icon(Icons.auto_awesome_rounded, color: ECutColors.roseGold, size: 26),
+                                ),
+                              ),
+                              const Spacer(),
+                              DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  child: Text(
+                                    'Ραντεβού αυθημερόν',
+                                    style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          padding: const EdgeInsets.all(8),
+                          const SizedBox(height: 22),
+                          Text(
+                            'Κλείσε υπηρεσίες ομορφιάς με premium εμπειρία.',
+                            style: Theme.of(context).textTheme.displayMedium?.copyWith(color: Colors.white),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Ανακάλυψε επιλεγμένους επαγγελματίες, διάλεξε υπηρεσία και κλείσε ραντεβού σε λίγα λεπτά.',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white.withValues(alpha: 0.74)),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: const [
+                              PremiumStatPill(value: '4.9', label: 'αξιολόγηση', icon: Icons.star_rounded, dark: true),
+                              SizedBox(width: 10),
+                              PremiumStatPill(value: '30λ', label: 'άμεσες ώρες', icon: Icons.schedule_rounded, dark: true),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          PremiumPrimaryButton(
+                            label: 'Αναζήτηση υπηρεσίας',
+                            icon: Icons.search_rounded,
+                            onPressed: _openSearch,
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: _showOfferDialog,
+                            icon: const Icon(Icons.card_giftcard_rounded, color: ECutColors.roseGold),
+                            label: const Text('Δες τον ιδιωτικό κωδικό έκπτωσης'),
+                            style: TextButton.styleFrom(foregroundColor: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _buildEntrance(
+                  order: 2,
+                  child: PremiumSearchTrigger(onTap: _openSearch),
+                ),
+                const SizedBox(height: 28),
+                _buildEntrance(
+                  order: 3,
+                  child: const PremiumSectionHeader(
+                    eyebrow: 'Ομορφιά & wellness',
+                    title: 'Τι χρειάζεσαι σήμερα;',
+                    subtitle: 'Γρήγορη επιλογή υπηρεσίας με επιλεγμένους συνεργάτες.',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _buildEntrance(
+                  order: 4,
+                  child: SizedBox(
+                    height: 126,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: services.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        final service = services[index];
+                        return PremiumServiceTile(
+                          label: service['name'] as String,
+                          icon: service['icon'] as IconData,
+                          accent: service['color'] as Color,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => StoreListScreen(serviceName: service['name'] as String)),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                _buildEntrance(
+                  order: 5,
+                  child: PremiumSectionHeader(
+                    eyebrow: 'Επιλογές e-Cut',
+                    title: 'Δημοφιλή καταστήματα',
+                    subtitle: 'Οι συνεργάτες που ξεχωρίζουν αυτή την εβδομάδα.',
+                    actionLabel: 'Όλα',
+                    onAction: _openSearch,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _buildEntrance(
+                  order: 6,
+                  child: SizedBox(
+                    height: 238,
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance.collection('stores').limit(7).snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        final stores = snapshot.data?.docs ?? [];
+                        if (stores.isEmpty) {
+                          return const PremiumEmptyState(
+                            icon: Icons.storefront_outlined,
+                            title: 'Δεν βρέθηκαν καταστήματα',
+                            message: 'Μόλις προστεθούν συνεργάτες θα εμφανιστούν εδώ.',
+                          );
+                        }
+
+                        return ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: stores.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 14),
+                          itemBuilder: (context, index) {
+                            final data = stores[index].data() as Map<String, dynamic>;
+                            final name = (data['name'] ?? 'Άγνωστο Μαγαζί').toString();
+                            final image = (data['photoUrl'] ?? 'https://via.placeholder.com/700x500').toString();
+                            final rating = _readRating(data);
+                            final storeServices = _readServices(data);
+                            final subtitle = storeServices.isEmpty ? 'Στούντιο ομορφιάς & wellness' : storeServices.take(2).join(' • ');
+
+                            return PremiumFeaturedStoreCard(
+                              name: name,
+                              imageUrl: image,
+                              rating: rating,
+                              subtitle: subtitle,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => StoreServicesScreen(storeName: name, services: storeServices),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                _buildEntrance(
+                  order: 7,
+                  child: PremiumGlassPanel(
+                    padding: const EdgeInsets.all(18),
+                    borderRadius: 26,
+                    child: Row(
+                      children: [
+                        DecoratedBox(
+                          decoration: const BoxDecoration(gradient: ECutColors.goldGradient, shape: BoxShape.circle),
+                          child: const SizedBox(
+                            width: 52,
+                            height: 52,
+                            child: Icon(Icons.verified_rounded, color: ECutColors.plumDeep),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Εικόνα
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Image.network(
-                                  data['photoUrl'] ?? 'https://via.placeholder.com/150',
-                                  height: 92,
-                                  width: 148,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (c,e,s) => Container(height: 92, width: 148, color: Colors.grey[300]),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Όνομα
+                              Text('Αξιόπιστη κράτηση', style: Theme.of(context).textTheme.titleMedium),
+                              const SizedBox(height: 4),
                               Text(
-                                data['name'],
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleMedium,
+                                'Επιβεβαίωση από το κατάστημα, ιστορικό ραντεβού και ειδοποιήσεις σε μία καθαρή εμπειρία.',
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
-                              // Βαθμολογία
-                              Row(
-                                children: [
-                                  const Icon(Icons.star, size: 14, color: Colors.orange),
-                                  Text(
-                                    ' ${data['rating'] ?? "0.0"}',
-                                    style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.textSecondary),
-                                  ),
-                                ],
-                              )
                             ],
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
-            )),
-            const SizedBox(height: 30), // Λίγο κενό στο τέλος
-          ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -854,10 +1016,11 @@ class _StoreListScreenState extends State<StoreListScreen> {
       appBar: AppBar(
         title: Text(widget.serviceName),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('stores')
-            .where('services', arrayContains: widget.serviceName)
+      body: PremiumAppBackground(
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('stores')
+              .where('services', arrayContains: widget.serviceName)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -891,8 +1054,8 @@ class _StoreListScreenState extends State<StoreListScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 18),
                   child: PremiumHeroPanel(
-                    title: 'Premium επιλογές για ${widget.serviceName}',
-                    subtitle: '${docs.length} διαθέσιμα καταστήματα κοντά σου',
+                    title: 'Επιλεγμένα καταστήματα για ${widget.serviceName}',
+                    subtitle: '${docs.length} διαθέσιμα καταστήματα για κράτηση',
                     icon: Icons.storefront_rounded,
                   ),
                 );
@@ -908,7 +1071,7 @@ class _StoreListScreenState extends State<StoreListScreen> {
                 name: name,
                 imageUrl: image,
                 rating: rating,
-                subtitle: '1.2 χλμ μακριά • Ανοιχτά τώρα',
+                subtitle: 'Διαθέσιμο για κράτηση • Επιβεβαίωση από το κατάστημα',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -923,7 +1086,8 @@ class _StoreListScreenState extends State<StoreListScreen> {
               );
             },
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -970,7 +1134,8 @@ class SelectStaffScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Επιλογή επαγγελματία'),
       ),
-      body: Column(
+      body: PremiumAppBackground(
+        child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
@@ -1011,7 +1176,7 @@ class SelectStaffScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final data = filteredDocs[index].data() as Map<String, dynamic>;
                     final staffName = (data['name'] ?? 'Συνεργάτης').toString();
-                    final staffRole = (data['role'] ?? 'Beauty Expert').toString();
+                    final staffRole = (data['role'] ?? 'Ειδικός ομορφιάς').toString();
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 14),
@@ -1076,6 +1241,7 @@ class SelectStaffScreen extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -1103,30 +1269,10 @@ class _BookingScreenState extends State<BookingScreen> {
   String? _selectedTime;
   bool _isLoading = false;
   List<String> _occupiedTimes = []; // Λίστα με τις "πιασμένες" ώρες
-  static const BorderRadius _sectionRadius = BorderRadius.all(Radius.circular(20));
-  static const BoxShadow _sectionShadow = BoxShadow(
-    color: Color(0x12000000),
-    blurRadius: 16,
-    offset: Offset(0, 8),
-  );
-
   // Ελεγκτές φόρμας
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _phoneController = TextEditingController();
-
-  Widget _sectionCard({required Widget child, EdgeInsetsGeometry padding = const EdgeInsets.all(16)}) {
-    return Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: _sectionRadius,
-        boxShadow: [_sectionShadow],
-      ),
-      child: child,
-    );
-  }
 
   @override
   void initState() {
@@ -1147,6 +1293,7 @@ class _BookingScreenState extends State<BookingScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (!mounted) return;
       if (doc.exists) {
         final data = doc.data()!;
         setState(() {
@@ -1181,14 +1328,15 @@ class _BookingScreenState extends State<BookingScreen> {
         }
       }
 
+      if (!mounted) return;
       setState(() {
         _occupiedTimes = busySlots; // Ενημερώνουμε τη λίστα
         _isLoading = false;
       });
 
     } catch (e) {
-      print("Error checking availability: $e");
-      setState(() => _isLoading = false);
+      debugPrint("Error checking availability: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
   }
   // ------------------------------------------------
@@ -1203,237 +1351,281 @@ class _BookingScreenState extends State<BookingScreen> {
     return int.parse(parts[0]) + int.parse(parts[1]) / 60.0;
   }
 
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _weekdayShort(DateTime date) {
+    const values = ['ΔΕΥ', 'ΤΡΙ', 'ΤΕΤ', 'ΠΕΜ', 'ΠΑΡ', 'ΣΑΒ', 'ΚΥΡ'];
+    return values[date.weekday - 1];
+  }
+
+  String _monthShort(DateTime date) {
+    const values = ['ΙΑΝ', 'ΦΕΒ', 'ΜΑΡ', 'ΑΠΡ', 'ΜΑΪ', 'ΙΟΥΝ', 'ΙΟΥΛ', 'ΑΥΓ', 'ΣΕΠ', 'ΟΚΤ', 'ΝΟΕ', 'ΔΕΚ'];
+    return values[date.month - 1];
+  }
+
+  String _displayDate(DateTime date) {
+    final includeYear = date.year != DateTime.now().year;
+    return _formatGreekDate(date, includeYear: includeYear);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundGrouped,
+      backgroundColor: ECutColors.ivory,
       appBar: AppBar(
-        title: const Text('Κλείσε Ραντεβού'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+        title: const Text('Κλείσε ραντεβού'),
       ),
-      body: FutureBuilder<QuerySnapshot>(
-        future: FirebaseFirestore.instance
-            .collection('stores')
-            .where('name', isEqualTo: widget.storeName)
-            .limit(1)
-            .get(),
-        builder: (context, snapshot) {
-          // Αν φορτώνουμε ακόμα τα booked slots, δείξε spinner
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Έλεγχος ωραρίου
-          bool isOpen = true;
-          String openTime = "10:00";
-          String closeTime = "20:00";
-          
-          if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-            final storeData = snapshot.data!.docs.first.data() as Map<String, dynamic>;
-            final hours = storeData['operatingHours'] as Map<String, dynamic>?;
-            final dayName = _getDayName(_selectedDate.weekday);
-            
-            if (hours != null && hours.containsKey(dayName)) {
-              isOpen = hours[dayName]['isOpen'] ?? true;
-              openTime = hours[dayName]['open'] ?? "10:00";
-              closeTime = hours[dayName]['close'] ?? "20:00";
+      body: PremiumAppBackground(
+        child: FutureBuilder<QuerySnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('stores')
+              .where('name', isEqualTo: widget.storeName)
+              .limit(1)
+              .get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
             }
-          }
 
-          // Δημιουργία Slots
-          List<String> timeSlots = [];
-          if (isOpen) {
-            double start = _timeToDouble(openTime);
-            double end = _timeToDouble(closeTime);
-            for (double t = start; t < end; t += 0.5) {
-              int h = t.floor();
-              int m = ((t - h) * 60).round();
-              timeSlots.add('${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}');
+            bool isOpen = true;
+            String openTime = '10:00';
+            String closeTime = '20:00';
+
+            if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
+              final storeData = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+              final hours = storeData['operatingHours'] as Map<String, dynamic>?;
+              final dayName = _getDayName(_selectedDate.weekday);
+
+              if (hours != null && hours.containsKey(dayName)) {
+                isOpen = hours[dayName]['isOpen'] ?? true;
+                openTime = hours[dayName]['open'] ?? '10:00';
+                closeTime = hours[dayName]['close'] ?? '20:00';
+              }
             }
-          }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Πληροφορίες
-                _sectionCard(
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.auto_awesome, color: AppColors.secondary),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(widget.storeName, style: Theme.of(context).textTheme.titleLarge),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${widget.serviceName} με ${widget.staffName}',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+            final timeSlots = <String>[];
+            if (isOpen) {
+              final start = _timeToDouble(openTime);
+              final end = _timeToDouble(closeTime);
+              for (double t = start; t < end; t += 0.5) {
+                final h = t.floor();
+                final m = ((t - h) * 60).round();
+                timeSlots.add('${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}');
+              }
+            }
 
-                // 2. Ημερομηνία
-                Text('1. Επιλέξτε Ημερομηνία & Ώρα', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 10),
-                _sectionCard(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                  child: Theme(
-                    data: Theme.of(context).copyWith(
-                      dividerColor: Colors.transparent,
-                      colorScheme: Theme.of(context).colorScheme.copyWith(
-                        primary: AppColors.primary,
-                        onPrimary: Colors.white,
-                        onSurface: AppColors.textPrimary,
-                        surface: AppColors.surface,
+            final dates = List<DateTime>.generate(14, (index) => DateTime.now().add(Duration(days: index)));
+            final availableSlots = (timeSlots.length - _occupiedTimes.length).clamp(0, timeSlots.length);
+
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 34),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: ECutColors.brandGradient,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: ECutShadows.lifted,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(22),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              DecoratedBox(
+                                decoration: const BoxDecoration(gradient: ECutColors.goldGradient, shape: BoxShape.circle),
+                                child: const SizedBox(
+                                  width: 54,
+                                  height: 54,
+                                  child: Icon(Icons.spa_rounded, color: ECutColors.plumDeep, size: 27),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.storeName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${widget.serviceName} με ${widget.staffName}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.72)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              PremiumStatPill(value: _displayDate(_selectedDate), label: 'ημερομηνία', icon: Icons.calendar_today_rounded, dark: true),
+                              const SizedBox(width: 10),
+                              PremiumStatPill(value: _selectedTime ?? '--:--', label: 'ώρα', icon: Icons.schedule_rounded, dark: true),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    child: CalendarDatePicker(
-                      initialDate: _selectedDate,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 30)),
-                      onDateChanged: (d) {
-                        setState(() {
-                          _selectedDate = d;
-                          _selectedTime = null;
-                        });
-                        _checkAvailability(); // <--- Ξανα-ελέγχουμε όταν αλλάζει η μέρα
+                  ),
+                  const SizedBox(height: 24),
+                  const PremiumStepLabel(
+                    step: '1',
+                    title: 'Διάλεξε ημέρα',
+                    subtitle: 'Οι διαθέσιμες ώρες ενημερώνονται αυτόματα.',
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    height: 104,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: dates.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final date = dates[index];
+                        return PremiumDateChip(
+                          weekday: _weekdayShort(date),
+                          day: date.day.toString(),
+                          month: _monthShort(date),
+                          selected: _isSameDate(date, _selectedDate),
+                          onTap: () {
+                            setState(() {
+                              _selectedDate = date;
+                              _selectedTime = null;
+                            });
+                            _checkAvailability();
+                          },
+                        );
                       },
                     ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                
-                // 3. Ώρες (Με έλεγχο "Πιασμένου")
-                if (!isOpen)
-                  const Center(child: Text('ΚΛΕΙΣΤΑ', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)))
-                else if (_isLoading)
-                  const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())) // Φορτώνει διαθεσιμότητα...
-                else
-                  _sectionCard(
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: timeSlots.map((t) {
-                        final isTaken = _occupiedTimes.contains(t);
-                        final isSelected = _selectedTime == t;
-                        return AnimatedScale(
-                          scale: isSelected ? 1.05 : 1.0,
-                          duration: const Duration(milliseconds: 170),
-                          curve: Curves.easeOutCubic,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(14),
-                            onTap: isTaken ? null : () => setState(() => _selectedTime = isSelected ? null : t),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isTaken
-                                    ? Colors.grey.shade100
-                                    : (isSelected ? AppColors.primaryLight : AppColors.surface),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: isTaken
-                                      ? Colors.grey.shade300
-                                      : (isSelected ? AppColors.primaryLight : AppColors.outline),
-                                ),
-                              ),
-                              child: Text(
-                                t,
-                                style: TextStyle(
-                                  color: isTaken ? Colors.grey : (isSelected ? Colors.white : AppColors.textPrimary),
-                                  fontWeight: FontWeight.w600,
-                                  decoration: isTaken ? TextDecoration.lineThrough : null,
-                                ),
-                              ),
-                            ),
+                  const SizedBox(height: 24),
+                  PremiumStepLabel(
+                    step: '2',
+                    title: 'Διάλεξε ώρα',
+                    subtitle: isOpen ? '$availableSlots διαθέσιμες ώρες • $openTime–$closeTime' : 'Το κατάστημα είναι κλειστό αυτή την ημέρα.',
+                  ),
+                  const SizedBox(height: 14),
+                  if (!isOpen)
+                    const PremiumEmptyState(
+                      icon: Icons.lock_clock_rounded,
+                      title: 'Κλειστά σήμερα',
+                      message: 'Δοκίμασε διαφορετική ημερομηνία για να δεις διαθέσιμες ώρες.',
+                    )
+                  else if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 28),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else
+                    PremiumGlassPanel(
+                      borderRadius: 26,
+                      padding: const EdgeInsets.all(16),
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: timeSlots.map((time) {
+                          final isTaken = _occupiedTimes.contains(time);
+                          final isSelected = _selectedTime == time;
+                          return PremiumTimeSlotChip(
+                            label: time,
+                            disabled: isTaken,
+                            selected: isSelected,
+                            onTap: () => setState(() => _selectedTime = isSelected ? null : time),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  const SizedBox(height: 26),
+                  const PremiumStepLabel(
+                    step: '3',
+                    title: 'Στοιχεία επικοινωνίας',
+                    subtitle: 'Θα χρησιμοποιηθούν μόνο για την επιβεβαίωση του ραντεβού.',
+                  ),
+                  const SizedBox(height: 14),
+                  PremiumGlassPanel(
+                    borderRadius: 26,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        PremiumTextField(
+                          controller: _nameController,
+                          label: 'Όνομα',
+                          prefixIcon: Icons.person_rounded,
+                        ),
+                        const SizedBox(height: 12),
+                        PremiumTextField(
+                          controller: _surnameController,
+                          label: 'Επίθετο',
+                          prefixIcon: Icons.person_outline_rounded,
+                        ),
+                        const SizedBox(height: 12),
+                        PremiumTextField(
+                          controller: _phoneController,
+                          label: 'Τηλέφωνο',
+                          prefixIcon: Icons.phone_rounded,
+                          keyboardType: TextInputType.phone,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  PremiumGlassPanel(
+                    borderRadius: 26,
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        DecoratedBox(
+                          decoration: const BoxDecoration(gradient: ECutColors.goldGradient, shape: BoxShape.circle),
+                          child: const SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(Icons.verified_outlined, color: ECutColors.plumDeep),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Αίτημα επιβεβαίωσης', style: Theme.of(context).textTheme.titleMedium),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Το κατάστημα θα εγκρίνει το ραντεβού και θα λάβεις ειδοποίηση.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                const SizedBox(height: 30),
-
-                // 4. Φόρμα Στοιχείων
-                Text('2. Τα Στοιχεία σας', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 10),
-                _sectionCard(
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Όνομα',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person, color: AppColors.secondary),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _surnameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Επίθετο',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.person_outline, color: AppColors.secondary),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          labelText: 'Τηλέφωνο',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.phone, color: AppColors.secondary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 30),
-
-                // 5. Κουμπί
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
+                  const SizedBox(height: 18),
+                  PremiumPrimaryButton(
+                    label: _selectedTime == null ? 'Επίλεξε ώρα για συνέχεια' : 'Επιβεβαίωση ραντεβού',
+                    icon: Icons.check_rounded,
+                    loading: _isLoading,
                     onPressed: (_selectedTime == null) ? null : _confirmBooking,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secondary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('Επιβεβαίωση Ραντεβού', style: TextStyle(color: Colors.white, fontSize: 16)),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -1471,59 +1663,59 @@ class _BookingScreenState extends State<BookingScreen> {
         isDismissible: false,
         enableDrag: false,
         backgroundColor: Colors.transparent,
-        builder: (ctx) => Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(8),
-                ),
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: PremiumGlassPanel(
+              borderRadius: 32,
+              padding: const EdgeInsets.fromLTRB(22, 16, 22, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: ECutColors.border,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  DecoratedBox(
+                    decoration: const BoxDecoration(gradient: ECutColors.goldGradient, shape: BoxShape.circle),
+                    child: const SizedBox(
+                      width: 72,
+                      height: 72,
+                      child: Icon(Icons.check_rounded, color: ECutColors.plumDeep, size: 42),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Το ραντεβού καταχωρήθηκε', textAlign: TextAlign.center, style: Theme.of(ctx).textTheme.headlineMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Το αίτημα στάλθηκε στο κατάστημα. Θα λάβεις ειδοποίηση μόλις επιβεβαιωθεί.',
+                    style: Theme.of(ctx).textTheme.bodyLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  PremiumPrimaryButton(
+                    label: 'Επιστροφή στην αρχική',
+                    icon: Icons.home_rounded,
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.14),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check_rounded, color: AppColors.success, size: 34),
-              ),
-              const SizedBox(height: 12),
-              Text('Το ραντεβού καταχωρήθηκε', style: Theme.of(ctx).textTheme.titleLarge),
-              const SizedBox(height: 6),
-              Text(
-                'Θα ενημερωθείτε μόλις το κατάστημα επιβεβαιώσει το αίτημα.',
-                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-                  child: const Text('Τέλεια'),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Σφάλμα: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Σφάλμα: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -1668,7 +1860,7 @@ class MyBookingsScreen extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: color.withOpacity(0.1),
+                                      color: color.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -1691,7 +1883,7 @@ class MyBookingsScreen extends StatelessWidget {
                                 children: [
                                   const Icon(Icons.access_time_filled, size: 16, color: Colors.grey),
                                   const SizedBox(width: 6),
-                                  Text('${data['date']} στις ${data['time']}'),
+                                  Text('${_formatGreekDateFromIso((data['date'] ?? '').toString(), includeWeekday: false)} στις ${data['time']}'),
                                 ],
                               ),
                               
@@ -1724,7 +1916,8 @@ class MyBookingsScreen extends StatelessWidget {
       ),
     );
   }
-}/// ---------------- PROFILE SCREEN ----------------
+}
+/// ---------------- PROFILE SCREEN ----------------
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -1760,6 +1953,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (!mounted) return;
       if (doc.exists) {
         final data = doc.data();
         if (data != null) {
@@ -1769,9 +1963,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Σφάλμα φόρτωσης: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Σφάλμα φόρτωσης: $e')));
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -1795,68 +1991,123 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Σφάλμα: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Σφάλμα: $e')));
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Το Προφίλ μου'),
-        backgroundColor: AppColors.primaryLight,
-        foregroundColor: Colors.white,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Icon(Icons.account_circle, size: 100, color: Colors.grey),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Όνομα', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person)),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _surnameController,
-                    decoration: const InputDecoration(labelText: 'Επίθετο', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person_outline)),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(labelText: 'Τηλέφωνο', border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone)),
-                  ),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _saveProfile,
-                      child: const Text('ΑΠΟΘΗΚΕΥΣΗ', style: TextStyle(fontSize: 16)),
+      backgroundColor: ECutColors.ivory,
+      appBar: AppBar(title: const Text('Το προφίλ μου')),
+      body: PremiumAppBackground(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 34),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: ECutColors.brandGradient,
+                        borderRadius: BorderRadius.circular(32),
+                        boxShadow: ECutShadows.lifted,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(22),
+                        child: Row(
+                          children: [
+                            DecoratedBox(
+                              decoration: const BoxDecoration(gradient: ECutColors.goldGradient, shape: BoxShape.circle),
+                              child: SizedBox(
+                                width: 68,
+                                height: 68,
+                                child: Center(
+                                  child: Text(
+                                    (user?.email ?? 'e').substring(0, 1).toUpperCase(),
+                                    style: const TextStyle(color: ECutColors.plumDeep, fontSize: 28, fontWeight: FontWeight.w900),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Το προφίλ σου', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    user?.email ?? 'Συνδεδεμένος χρήστης',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.72)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                  const Divider(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
+                    const SizedBox(height: 22),
+                    const PremiumStepLabel(
+                      step: '1',
+                      title: 'Προσωπικά στοιχεία',
+                      subtitle: 'Χρησιμοποιούνται για πιο γρήγορη ολοκλήρωση της κράτησης.',
+                    ),
+                    const SizedBox(height: 14),
+                    PremiumGlassPanel(
+                      borderRadius: 28,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          PremiumTextField(controller: _nameController, label: 'Όνομα', prefixIcon: Icons.person_rounded),
+                          const SizedBox(height: 12),
+                          PremiumTextField(controller: _surnameController, label: 'Επίθετο', prefixIcon: Icons.person_outline_rounded),
+                          const SizedBox(height: 12),
+                          PremiumTextField(
+                            controller: _phoneController,
+                            label: 'Τηλέφωνο',
+                            prefixIcon: Icons.phone_rounded,
+                            keyboardType: TextInputType.phone,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    PremiumPrimaryButton(
+                      label: 'Αποθήκευση στοιχείων',
+                      icon: Icons.save_rounded,
+                      loading: _isLoading,
+                      onPressed: _saveProfile,
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
                       onPressed: () {
                         FirebaseAuth.instance.signOut();
-                        Navigator.pop(context); // Κλείνει το προφίλ
+                        Navigator.pop(context);
                       },
-                      icon: const Icon(Icons.logout, color: Colors.red),
-                      label: const Text('Αποσύνδεση', style: TextStyle(color: Colors.red)),
-                      style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red)),
+                      icon: const Icon(Icons.logout_rounded, color: ECutColors.danger),
+                      label: const Text('Αποσύνδεση', style: TextStyle(color: ECutColors.danger, fontWeight: FontWeight.w900)),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52),
+                        side: const BorderSide(color: ECutColors.danger),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }
@@ -1885,9 +2136,10 @@ class UserBookingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: ECutColors.ivory,
       appBar: AppBar(title: const Text('Τα ραντεβού μου')),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('bookings')
+      body: PremiumAppBackground(
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('bookings')
             .where('userId', isEqualTo: user.uid)
             .orderBy('createdAt', descending: true)
             .snapshots(),
@@ -1909,13 +2161,13 @@ class UserBookingsScreen extends StatelessWidget {
             return const PremiumEmptyState(
               icon: Icons.calendar_today_outlined,
               title: 'Δεν έχεις ραντεβού ακόμα',
-              message: 'Κλείσε την πρώτη σου premium υπηρεσία και θα εμφανιστεί εδώ.',
+              message: 'Κλείσε την πρώτη σου υπηρεσία και θα εμφανιστεί εδώ.',
             );
           }
 
           return ListView.builder(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
@@ -1925,6 +2177,7 @@ class UserBookingsScreen extends StatelessWidget {
               final storeName = (data['storeName'] ?? '').toString();
               final serviceName = (data['serviceName'] ?? '').toString();
               final date = (data['date'] ?? '').toString();
+              final displayDate = _formatGreekDateFromIso(date);
               final time = (data['time'] ?? '').toString();
 
               return Padding(
@@ -1984,7 +2237,7 @@ class UserBookingsScreen extends StatelessWidget {
                                 children: [
                                   const Icon(Icons.schedule_rounded, size: 17, color: ECutColors.muted),
                                   const SizedBox(width: 7),
-                                  Text('$date • $time', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: ECutColors.plum)),
+                                  Text('$displayDate • $time', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: ECutColors.plum)),
                                 ],
                               ),
                             ],
@@ -1997,7 +2250,8 @@ class UserBookingsScreen extends StatelessWidget {
               );
             },
           );
-        },
+          },
+        ),
       ),
     );
   }
@@ -2036,7 +2290,8 @@ class _StoreSearchScreenState extends State<StoreSearchScreen> {
     return Scaffold(
       backgroundColor: ECutColors.ivory,
       appBar: AppBar(title: const Text('Αναζήτηση')),
-      body: Column(
+      body: PremiumAppBackground(
+        child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
@@ -2091,7 +2346,7 @@ class _StoreSearchScreenState extends State<StoreSearchScreen> {
 
                 return ListView.builder(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
                   itemCount: filteredStores.length,
                   itemBuilder: (context, index) {
                     final data = filteredStores[index].data() as Map<String, dynamic>;
@@ -2104,7 +2359,7 @@ class _StoreSearchScreenState extends State<StoreSearchScreen> {
                       name: name,
                       imageUrl: image,
                       rating: rating,
-                      subtitle: services.isEmpty ? 'Beauty & wellness partner' : services.take(3).join(' • '),
+                      subtitle: services.isEmpty ? 'Συνεργάτης ομορφιάς & wellness' : services.take(3).join(' • '),
                       compact: true,
                       onTap: () {
                         Navigator.push(
@@ -2121,6 +2376,7 @@ class _StoreSearchScreenState extends State<StoreSearchScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -2139,17 +2395,18 @@ class StoreServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Map<String, Map<String, dynamic>> catalog = {
-      'Κούρεμα': {'price': '15€', 'duration': '45\'', 'icon': Icons.content_cut},
-      'Ξύρισμα': {'price': '10€', 'duration': '30\'', 'icon': Icons.face},
-      'Βαφή': {'price': '25€', 'duration': '60\'', 'icon': Icons.color_lens},
-      'Περιποίηση': {'price': '20€', 'duration': '30\'', 'icon': Icons.spa},
-      'Χτένισμα': {'price': '12€', 'duration': '20\'', 'icon': Icons.brush},
+      'Κούρεμα': {'price': '15€', 'duration': '45 λεπτά', 'icon': Icons.content_cut},
+      'Ξύρισμα': {'price': '10€', 'duration': '30 λεπτά', 'icon': Icons.face},
+      'Βαφή': {'price': '25€', 'duration': '60 λεπτά', 'icon': Icons.color_lens},
+      'Περιποίηση': {'price': '20€', 'duration': '30 λεπτά', 'icon': Icons.spa},
+      'Χτένισμα': {'price': '12€', 'duration': '20 λεπτά', 'icon': Icons.brush},
     };
 
     return Scaffold(
       backgroundColor: ECutColors.ivory,
       appBar: AppBar(title: const Text('Τιμοκατάλογος')),
-      body: services.isEmpty
+      body: PremiumAppBackground(
+        child: services.isEmpty
           ? const PremiumEmptyState(
               icon: Icons.spa_outlined,
               title: 'Δεν βρέθηκαν υπηρεσίες',
@@ -2243,6 +2500,7 @@ class StoreServicesScreen extends StatelessWidget {
                 );
               },
             ),
+      ),
     );
   }
 }

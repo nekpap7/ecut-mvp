@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Ultra-premium UI foundation for e-Cut.
 ///
@@ -170,6 +173,7 @@ class ECutTheme {
         elevation: 0,
         centerTitle: true,
         surfaceTintColor: Colors.transparent,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         titleTextStyle: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w800,
@@ -444,67 +448,74 @@ class PremiumBottomNav extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 0, 16, bottom > 0 ? 10 : 14),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: ECutColors.surface.withOpacity(0.96),
-          borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: ECutColors.border),
-          boxShadow: ECutShadows.lifted,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            children: List.generate(_items.length, (index) {
-              final item = _items[index];
-              final selected = selectedIndex == index;
-              return Expanded(
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  child: InkWell(
-                    onTap: () => onTap(index),
-                    borderRadius: BorderRadius.circular(20),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: selected ? ECutColors.porcelain : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            item.icon,
-                            color: selected ? ECutColors.plum : ECutColors.muted,
-                            size: 22,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: ECutColors.plumDeep.withValues(alpha: 0.86),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              boxShadow: ECutShadows.lifted,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: List.generate(_items.length, (index) {
+                  final item = _items[index];
+                  final selected = selectedIndex == index;
+                  return Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(22),
+                      child: InkWell(
+                        onTap: () => onTap(index),
+                        borderRadius: BorderRadius.circular(22),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 240),
+                          curve: Curves.easeOutCubic,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            gradient: selected ? ECutColors.goldGradient : null,
+                            color: selected ? null : Colors.transparent,
+                            borderRadius: BorderRadius.circular(22),
                           ),
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 200),
-                            child: selected
-                                ? Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: Text(
-                                      item.label,
-                                      maxLines: 1,
-                                      style: const TextStyle(
-                                        color: ECutColors.plum,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 12.5,
-                                      ),
-                                    ),
-                                  )
-                                : const SizedBox.shrink(),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                item.icon,
+                                color: selected ? ECutColors.plumDeep : Colors.white.withValues(alpha: 0.70),
+                                size: 22,
+                              ),
+                              AnimatedSize(
+                                duration: const Duration(milliseconds: 210),
+                                child: selected
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(left: 8),
+                                        child: Text(
+                                          item.label,
+                                          maxLines: 1,
+                                          style: const TextStyle(
+                                            color: ECutColors.plumDeep,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 12.5,
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              );
-            }),
+                  );
+                }),
+              ),
+            ),
           ),
         ),
       ),
@@ -561,7 +572,7 @@ class PremiumAuthBackground extends StatelessWidget {
                 colors: [
                   ECutColors.ivory,
                   ECutColors.porcelain,
-                  ECutColors.champagne.withOpacity(0.78),
+                  ECutColors.champagne.withValues(alpha: 0.78),
                 ],
               ),
             ),
@@ -572,7 +583,7 @@ class PremiumAuthBackground extends StatelessWidget {
           right: -110,
           child: _BlurCircle(
             size: 260,
-            color: ECutColors.orchid.withOpacity(0.33),
+            color: ECutColors.orchid.withValues(alpha: 0.33),
           ),
         ),
         Positioned(
@@ -580,7 +591,7 @@ class PremiumAuthBackground extends StatelessWidget {
           left: -120,
           child: _BlurCircle(
             size: 290,
-            color: ECutColors.roseGold.withOpacity(0.26),
+            color: ECutColors.roseGold.withValues(alpha: 0.26),
           ),
         ),
         child,
@@ -601,7 +612,7 @@ class _BlurCircle extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [color, color.withOpacity(0)],
+          colors: [color, color.withValues(alpha: 0)],
         ),
       ),
       child: SizedBox(width: size, height: size),
@@ -635,9 +646,9 @@ class PremiumHeroPanel extends StatelessWidget {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.14),
+                color: Colors.white.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.white.withOpacity(0.18)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
               ),
               child: SizedBox(
                 width: 54,
@@ -661,7 +672,7 @@ class PremiumHeroPanel extends StatelessWidget {
                     subtitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.72)),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.72)),
                   ),
                 ],
               ),
@@ -735,7 +746,7 @@ class PremiumRatingBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: ECutColors.plumDeep.withOpacity(0.88),
+        color: ECutColors.plumDeep.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
@@ -770,7 +781,7 @@ class PremiumStatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
@@ -913,3 +924,649 @@ class PremiumStoreCard extends StatelessWidget {
     );
   }
 }
+
+/// Phase 2 motion + luxury discovery components.
+/// These widgets stay UI-only and can be reused across screens without touching
+/// Firebase, Firestore, Auth or booking business logic.
+class ECutMotion {
+  ECutMotion._();
+
+  static const Duration fast = Duration(milliseconds: 180);
+  static const Duration normal = Duration(milliseconds: 260);
+  static const Duration slow = Duration(milliseconds: 520);
+  static const Curve curve = Curves.easeOutCubic;
+}
+
+class PremiumAppBackground extends StatelessWidget {
+  const PremiumAppBackground({
+    super.key,
+    required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  ECutColors.ivory,
+                  ECutColors.porcelain,
+                  ECutColors.champagne.withValues(alpha: 0.64),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: -140,
+          right: -90,
+          child: _BlurCircle(size: 330, color: ECutColors.orchid.withValues(alpha: 0.28)),
+        ),
+        Positioned(
+          top: 210,
+          left: -160,
+          child: _BlurCircle(size: 300, color: ECutColors.roseGold.withValues(alpha: 0.20)),
+        ),
+        Positioned(
+          bottom: -150,
+          right: -150,
+          child: _BlurCircle(size: 330, color: ECutColors.violet.withValues(alpha: 0.14)),
+        ),
+        child,
+      ],
+    );
+  }
+}
+
+class PremiumGlassPanel extends StatelessWidget {
+  const PremiumGlassPanel({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(ECutSpacing.lg),
+    this.borderRadius = ECutRadius.xl,
+    this.tint = Colors.white,
+    this.opacity = 0.72,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final double borderRadius;
+  final Color tint;
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: tint.withValues(alpha: opacity),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
+            boxShadow: ECutShadows.soft,
+          ),
+          child: Padding(padding: padding, child: child),
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumSectionHeader extends StatelessWidget {
+  const PremiumSectionHeader({
+    super.key,
+    this.eyebrow,
+    required this.title,
+    this.subtitle,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String? eyebrow;
+  final String title;
+  final String? subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (eyebrow != null) ...[
+                Text(
+                  eyebrow!.toUpperCase(),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: ECutColors.roseGold,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.1,
+                      ),
+                ),
+                const SizedBox(height: 5),
+              ],
+              Text(title, style: Theme.of(context).textTheme.headlineMedium),
+              if (subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ],
+          ),
+        ),
+        if (actionLabel != null && onAction != null)
+          TextButton(
+            onPressed: onAction,
+            child: Text(actionLabel!),
+          ),
+      ],
+    );
+  }
+}
+
+class PremiumSearchTrigger extends StatelessWidget {
+  const PremiumSearchTrigger({
+    super.key,
+    required this.onTap,
+    this.placeholder = 'Αναζήτησε υπηρεσία ή κατάστημα',
+  });
+
+  final VoidCallback onTap;
+  final String placeholder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: PremiumGlassPanel(
+          borderRadius: 22,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              const Icon(Icons.search_rounded, color: ECutColors.plum, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  placeholder,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: ECutColors.inkSoft,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: ECutColors.plum,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Text(
+                    'Βρες',
+                    style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumStatPill extends StatelessWidget {
+  const PremiumStatPill({
+    super.key,
+    required this.value,
+    required this.label,
+    this.icon,
+    this.dark = false,
+  });
+
+  final String value;
+  final String label;
+  final IconData? icon;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = dark ? Colors.white : ECutColors.ink;
+    final subColor = dark ? Colors.white.withValues(alpha: 0.70) : ECutColors.inkSoft;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: dark ? Colors.white.withValues(alpha: 0.10) : ECutColors.surface.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: dark ? Colors.white.withValues(alpha: 0.16) : Colors.white.withValues(alpha: 0.86)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: dark ? ECutColors.roseGold : ECutColors.plum, size: 18),
+              const SizedBox(width: 8),
+            ],
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(value, style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w900)),
+                Text(label, style: TextStyle(color: subColor, fontSize: 11, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumServiceTile extends StatelessWidget {
+  const PremiumServiceTile({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.accent = ECutColors.plum,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: AnimatedContainer(
+          duration: ECutMotion.normal,
+          curve: ECutMotion.curve,
+          width: 112,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.82)),
+            boxShadow: ECutShadows.soft,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [accent.withValues(alpha: 0.18), ECutColors.roseGold.withValues(alpha: 0.12)],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: SizedBox(
+                  width: 50,
+                  height: 50,
+                  child: Icon(icon, color: accent, size: 24),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: ECutColors.ink),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumFeaturedStoreCard extends StatelessWidget {
+  const PremiumFeaturedStoreCard({
+    super.key,
+    required this.name,
+    required this.imageUrl,
+    required this.rating,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String name;
+  final String imageUrl;
+  final double rating;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 270,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(30),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(30),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: ECutColors.surface,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+              boxShadow: ECutShadows.lifted,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                      child: Image.network(
+                        imageUrl,
+                        height: 155,
+                        width: 270,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 155,
+                          width: 270,
+                          decoration: const BoxDecoration(
+                            gradient: ECutColors.brandGradient,
+                          ),
+                          child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 42),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, ECutColors.plumDeep.withValues(alpha: 0.62)],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(top: 12, right: 12, child: PremiumRatingBadge(rating: rating)),
+                    Positioned(
+                      left: 14,
+                      bottom: 12,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          child: Text(
+                            'Επιλεγμένος συνεργάτης',
+                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 5),
+                            Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      DecoratedBox(
+                        decoration: const BoxDecoration(gradient: ECutColors.goldGradient, shape: BoxShape.circle),
+                        child: const SizedBox(
+                          width: 38,
+                          height: 38,
+                          child: Icon(Icons.arrow_forward_rounded, color: ECutColors.plumDeep, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumDateChip extends StatelessWidget {
+  const PremiumDateChip({
+    super.key,
+    required this.weekday,
+    required this.day,
+    required this.month,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String weekday;
+  final String day;
+  final String month;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: selected ? 1.04 : 1,
+      duration: ECutMotion.fast,
+      curve: ECutMotion.curve,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: AnimatedContainer(
+            duration: ECutMotion.normal,
+            curve: ECutMotion.curve,
+            width: 76,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: selected ? ECutColors.brandGradient : null,
+              color: selected ? null : ECutColors.surface,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: selected ? Colors.transparent : ECutColors.border),
+              boxShadow: selected ? ECutShadows.lifted : ECutShadows.soft,
+            ),
+            child: Column(
+              children: [
+                Text(
+                  weekday,
+                  style: TextStyle(
+                    color: selected ? Colors.white.withValues(alpha: 0.72) : ECutColors.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  day,
+                  style: TextStyle(
+                    color: selected ? Colors.white : ECutColors.ink,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.6,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  month,
+                  style: TextStyle(
+                    color: selected ? ECutColors.roseGoldSoft : ECutColors.inkSoft,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumTimeSlotChip extends StatelessWidget {
+  const PremiumTimeSlotChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.disabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool disabled;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = disabled
+        ? ECutColors.muted.withValues(alpha: 0.55)
+        : selected
+            ? Colors.white
+            : ECutColors.ink;
+
+    return AnimatedScale(
+      scale: selected ? 1.06 : 1,
+      duration: ECutMotion.fast,
+      curve: ECutMotion.curve,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: disabled ? null : onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: ECutMotion.normal,
+            curve: ECutMotion.curve,
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: selected ? ECutColors.brandGradient : null,
+              color: disabled
+                  ? ECutColors.porcelain.withValues(alpha: 0.46)
+                  : (selected ? null : ECutColors.surface),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected
+                    ? Colors.transparent
+                    : disabled
+                        ? ECutColors.border.withValues(alpha: 0.55)
+                        : ECutColors.border,
+              ),
+              boxShadow: selected ? ECutShadows.soft : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (selected) ...[
+                  const Icon(Icons.check_rounded, color: Colors.white, size: 16),
+                  const SizedBox(width: 5),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: foreground,
+                    fontWeight: FontWeight.w900,
+                    decoration: disabled ? TextDecoration.lineThrough : null,
+                    decorationColor: ECutColors.muted.withValues(alpha: 0.55),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumStepLabel extends StatelessWidget {
+  const PremiumStepLabel({
+    super.key,
+    required this.step,
+    required this.title,
+    this.subtitle,
+  });
+
+  final String step;
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DecoratedBox(
+          decoration: const BoxDecoration(gradient: ECutColors.goldGradient, shape: BoxShape.circle),
+          child: SizedBox(
+            width: 34,
+            height: 34,
+            child: Center(
+              child: Text(step, style: const TextStyle(color: ECutColors.plumDeep, fontWeight: FontWeight.w900)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              if (subtitle != null) ...[
+                const SizedBox(height: 3),
+                Text(subtitle!, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
