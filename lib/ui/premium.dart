@@ -1571,3 +1571,211 @@ class PremiumStepLabel extends StatelessWidget {
   }
 }
 
+
+/// Phase 3 production polish components: premium loading/skeleton states.
+/// UI-only helpers used while Firestore data is loading.
+class PremiumLoadingState extends StatelessWidget {
+  const PremiumLoadingState({
+    super.key,
+    this.title = 'Φόρτωση εμπειρίας',
+    this.message = 'Ετοιμάζουμε τα διαθέσιμα στοιχεία για σένα.',
+    this.icon = Icons.auto_awesome_rounded,
+  });
+
+  final String title;
+  final String message;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: PremiumGlassPanel(
+          borderRadius: 30,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DecoratedBox(
+                decoration: const BoxDecoration(gradient: ECutColors.goldGradient, shape: BoxShape.circle),
+                child: SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: Icon(icon, color: ECutColors.plumDeep, size: 34),
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: 34,
+                height: 34,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: const AlwaysStoppedAnimation<Color>(ECutColors.plum),
+                  backgroundColor: ECutColors.plum.withValues(alpha: 0.08),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              Text(message, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumSkeletonBox extends StatelessWidget {
+  const PremiumSkeletonBox({
+    super.key,
+    required this.width,
+    required this.height,
+    this.borderRadius = 16,
+  });
+
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            ECutColors.porcelain,
+            ECutColors.champagne.withValues(alpha: 0.40),
+            ECutColors.porcelain,
+          ],
+        ),
+      ),
+      child: SizedBox(width: width, height: height),
+    );
+  }
+}
+
+class PremiumSkeletonList extends StatelessWidget {
+  const PremiumSkeletonList({
+    super.key,
+    this.itemCount = 3,
+    this.compact = true,
+    this.padding = const EdgeInsets.fromLTRB(20, 8, 20, 132),
+  });
+
+  final int itemCount;
+  final bool compact;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      physics: const BouncingScrollPhysics(),
+      padding: padding,
+      itemCount: itemCount,
+      separatorBuilder: (_, __) => const SizedBox(height: 14),
+      itemBuilder: (context, index) => PremiumSurface(
+        padding: const EdgeInsets.all(12),
+        child: compact ? _compactCard() : _largeCard(),
+      ),
+    );
+  }
+
+  Widget _compactCard() {
+    return Row(
+      children: [
+        const PremiumSkeletonBox(width: 78, height: 78, borderRadius: 20),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              PremiumSkeletonBox(width: 170, height: 18, borderRadius: 999),
+              SizedBox(height: 10),
+              PremiumSkeletonBox(width: 220, height: 14, borderRadius: 999),
+              SizedBox(height: 14),
+              PremiumSkeletonBox(width: 74, height: 28, borderRadius: 999),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _largeCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        PremiumSkeletonBox(width: double.infinity, height: 168, borderRadius: 24),
+        SizedBox(height: 14),
+        PremiumSkeletonBox(width: 180, height: 20, borderRadius: 999),
+        SizedBox(height: 10),
+        PremiumSkeletonBox(width: 260, height: 15, borderRadius: 999),
+      ],
+    );
+  }
+}
+
+class PremiumHorizontalStoreSkeleton extends StatelessWidget {
+  const PremiumHorizontalStoreSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      itemCount: 3,
+      separatorBuilder: (_, __) => const SizedBox(width: 14),
+      itemBuilder: (context, index) => SizedBox(
+        width: 270,
+        child: PremiumSurface(
+          borderRadius: 30,
+          padding: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                PremiumSkeletonBox(width: double.infinity, height: 140, borderRadius: 24),
+                SizedBox(height: 16),
+                PremiumSkeletonBox(width: 158, height: 18, borderRadius: 999),
+                SizedBox(height: 10),
+                PremiumSkeletonBox(width: 210, height: 14, borderRadius: 999),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PremiumBookingSkeleton extends StatelessWidget {
+  const PremiumBookingSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 34),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          PremiumSkeletonBox(width: double.infinity, height: 178, borderRadius: 32),
+          SizedBox(height: 24),
+          PremiumSkeletonBox(width: 170, height: 22, borderRadius: 999),
+          SizedBox(height: 14),
+          PremiumSkeletonBox(width: double.infinity, height: 104, borderRadius: 24),
+          SizedBox(height: 24),
+          PremiumSkeletonBox(width: 150, height: 22, borderRadius: 999),
+          SizedBox(height: 14),
+          PremiumSkeletonBox(width: double.infinity, height: 280, borderRadius: 28),
+        ],
+      ),
+    );
+  }
+}

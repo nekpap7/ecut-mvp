@@ -903,7 +903,7 @@ class _HomeContentState extends State<HomeContent> with SingleTickerProviderStat
                       stream: FirebaseFirestore.instance.collection('stores').limit(7).snapshots(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const PremiumHorizontalStoreSkeleton();
                         }
 
                         final stores = snapshot.data?.docs ?? [];
@@ -1024,7 +1024,7 @@ class _StoreListScreenState extends State<StoreListScreen> {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const PremiumSkeletonList(compact: false, padding: EdgeInsets.fromLTRB(20, 6, 20, 28));
           }
 
           if (snapshot.hasError) {
@@ -1071,7 +1071,7 @@ class _StoreListScreenState extends State<StoreListScreen> {
                 name: name,
                 imageUrl: image,
                 rating: rating,
-                subtitle: 'Διαθέσιμο για κράτηση • Επιβεβαίωση από το κατάστημα',
+                subtitle: 'Διαθέσιμο για κράτηση • Επιβεβαίωση',
                 onTap: () {
                   Navigator.push(
                     context,
@@ -1152,7 +1152,7 @@ class SelectStaffScreen extends StatelessWidget {
                   .where('storeName', isEqualTo: storeName)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                if (!snapshot.hasData) return const PremiumSkeletonList(itemCount: 4, compact: true, padding: EdgeInsets.fromLTRB(20, 0, 20, 28));
 
                 final allDocs = snapshot.data!.docs;
                 final filteredDocs = allDocs.where((doc) {
@@ -1391,7 +1391,7 @@ class _BookingScreenState extends State<BookingScreen> {
               .get(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const PremiumBookingSkeleton();
             }
 
             bool isOpen = true;
@@ -1522,7 +1522,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   PremiumStepLabel(
                     step: '2',
                     title: 'Διάλεξε ώρα',
-                    subtitle: isOpen ? '${_availableAppointmentLabel(availableSlots)} • ωράριο $openTime–$closeTime' : 'Το κατάστημα είναι κλειστό αυτή την ημέρα.',
+                    subtitle: isOpen ? '${_availableAppointmentLabel(availableSlots)} για κράτηση • $openTime–$closeTime' : 'Το κατάστημα είναι κλειστό αυτή την ημέρα.',
                   ),
                   const SizedBox(height: 14),
                   if (!isOpen)
@@ -1532,9 +1532,21 @@ class _BookingScreenState extends State<BookingScreen> {
                       message: 'Δοκίμασε διαφορετική ημερομηνία για να δεις διαθέσιμα ραντεβού.',
                     )
                   else if (_isLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 28),
-                      child: Center(child: CircularProgressIndicator()),
+                    const PremiumGlassPanel(
+                      borderRadius: 26,
+                      padding: EdgeInsets.symmetric(vertical: 28, horizontal: 18),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2.4),
+                          ),
+                          SizedBox(width: 12),
+                          Text('Ελέγχουμε τα διαθέσιμα ραντεβού...'),
+                        ],
+                      ),
                     )
                   else
                     PremiumGlassPanel(
@@ -1701,6 +1713,32 @@ class _BookingScreenState extends State<BookingScreen> {
                     'Το αίτημα στάλθηκε στο κατάστημα. Θα λάβεις ειδοποίηση μόλις επιβεβαιωθεί.',
                     style: Theme.of(ctx).textTheme.bodyLarge,
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: ECutColors.porcelain.withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: ECutColors.border),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        children: [
+                          Text(
+                            '${widget.serviceName} με ${widget.staffName}',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(ctx).textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${_formatGreekDate(_selectedDate)} • ${_selectedTime ?? ''}',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: ECutColors.plum),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   PremiumPrimaryButton(
@@ -2013,7 +2051,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(title: const Text('Το προφίλ μου')),
       body: PremiumAppBackground(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const PremiumLoadingState(
+                title: 'Φόρτωση προφίλ',
+                message: 'Ετοιμάζουμε τα στοιχεία κράτησής σου.',
+                icon: Icons.person_outline_rounded,
+              )
             : SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 34),
@@ -2061,6 +2103,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ],
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    PremiumGlassPanel(
+                      borderRadius: 26,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Έτοιμο για γρήγορες κρατήσεις', style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Συμπλήρωσε μία φορά τα στοιχεία σου και το e-Cut τα φέρνει αυτόματα σε κάθε αίτημα ραντεβού.',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 14),
+                          const _ProfileBenefitRow(
+                            icon: Icons.flash_on_rounded,
+                            title: 'Ταχύτερη ολοκλήρωση',
+                            subtitle: 'Λιγότερα βήματα στην κράτηση.',
+                          ),
+                          const SizedBox(height: 10),
+                          const _ProfileBenefitRow(
+                            icon: Icons.notifications_active_rounded,
+                            title: 'Ενημερώσεις ραντεβού',
+                            subtitle: 'Λαμβάνεις ειδοποίηση μόλις εγκριθεί.',
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 22),
@@ -2116,6 +2186,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
+class _ProfileBenefitRow extends StatelessWidget {
+  const _ProfileBenefitRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: ECutColors.porcelain,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: SizedBox(
+            width: 38,
+            height: 38,
+            child: Icon(icon, color: ECutColors.plum, size: 20),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 2),
+              Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// ---------------- ΟΘΟΝΗ ΙΣΤΟΡΙΚΟΥ ΡΑΝΤΕΒΟΥ (UserBookingsScreen) ----------------
 class UserBookingsScreen extends StatelessWidget {
   const UserBookingsScreen({super.key});
@@ -2150,7 +2263,7 @@ class UserBookingsScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const PremiumSkeletonList(itemCount: 4, compact: true);
           }
           if (snapshot.hasError) {
             return const PremiumEmptyState(
@@ -2170,12 +2283,71 @@ class UserBookingsScreen extends StatelessWidget {
             );
           }
 
+          final pendingCount = docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return (data['status'] ?? 'pending').toString() == 'pending';
+          }).length;
+          final confirmedCount = docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return (data['status'] ?? '').toString() == 'confirmed';
+          }).length;
+
           return ListView.builder(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 132),
-            itemCount: docs.length,
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 142),
+            itemCount: docs.length + 1,
             itemBuilder: (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
+              if (index == 0) {
+                final totalLabel = docs.length == 1 ? '1 κράτηση στο ιστορικό σου' : '${docs.length} κρατήσεις στο ιστορικό σου';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    children: [
+                      PremiumHeroPanel(
+                        title: 'Η εμπειρία σου στο e-Cut',
+                        subtitle: totalLabel,
+                        icon: Icons.calendar_month_rounded,
+                      ),
+                      const SizedBox(height: 14),
+                      PremiumGlassPanel(
+                        borderRadius: 26,
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _BookingMetric(
+                                value: docs.length.toString(),
+                                label: 'σύνολο',
+                                icon: Icons.event_available_rounded,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _BookingMetric(
+                                value: pendingCount.toString(),
+                                label: 'εκκρεμεί',
+                                icon: Icons.hourglass_top_rounded,
+                                accent: ECutColors.warning,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _BookingMetric(
+                                value: confirmedCount.toString(),
+                                label: 'εγκρίθηκε',
+                                icon: Icons.verified_rounded,
+                                accent: ECutColors.success,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final data = docs[index - 1].data() as Map<String, dynamic>;
               final status = (data['status'] ?? 'pending').toString();
               final color = _statusColor(status);
               final staffName = (data['staffName'] ?? 'Χωρίς επιλογή').toString();
@@ -2261,6 +2433,56 @@ class UserBookingsScreen extends StatelessWidget {
     );
   }
 }
+
+class _BookingMetric extends StatelessWidget {
+  const _BookingMetric({
+    required this.value,
+    required this.label,
+    required this.icon,
+    this.accent = ECutColors.plum,
+  });
+
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.68),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: accent, size: 20),
+            const SizedBox(height: 7),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: ECutColors.ink),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: ECutColors.inkSoft,
+                    fontSize: 10.5,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// ---------------- ΟΘΟΝΗ ΑΝΑΖΗΤΗΣΗΣ (SEARCH SCREEN) ----------------
 class StoreSearchScreen extends StatefulWidget {
   const StoreSearchScreen({super.key});
@@ -2331,7 +2553,7 @@ class _StoreSearchScreenState extends State<StoreSearchScreen> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collection('stores').snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                if (!snapshot.hasData) return const PremiumSkeletonList(itemCount: 3, compact: true);
 
                 final allStores = snapshot.data!.docs;
                 final filteredStores = allStores.where((doc) {
