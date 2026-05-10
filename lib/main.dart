@@ -1370,6 +1370,11 @@ class _BookingScreenState extends State<BookingScreen> {
     return _formatGreekDate(date, includeYear: includeYear);
   }
 
+  String _availableAppointmentLabel(int count) {
+    if (count == 1) return '1 διαθέσιμο ραντεβού';
+    return '$count διαθέσιμα ραντεβού';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1417,7 +1422,7 @@ class _BookingScreenState extends State<BookingScreen> {
             }
 
             final dates = List<DateTime>.generate(14, (index) => DateTime.now().add(Duration(days: index)));
-            final availableSlots = (timeSlots.length - _occupiedTimes.length).clamp(0, timeSlots.length);
+            final availableSlots = (timeSlots.length - _occupiedTimes.length).clamp(0, timeSlots.length).toInt();
 
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -1485,7 +1490,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   const PremiumStepLabel(
                     step: '1',
                     title: 'Διάλεξε ημέρα',
-                    subtitle: 'Οι διαθέσιμες ώρες ενημερώνονται αυτόματα.',
+                    subtitle: 'Τα διαθέσιμα ραντεβού ενημερώνονται αυτόματα.',
                   ),
                   const SizedBox(height: 14),
                   SizedBox(
@@ -1517,14 +1522,14 @@ class _BookingScreenState extends State<BookingScreen> {
                   PremiumStepLabel(
                     step: '2',
                     title: 'Διάλεξε ώρα',
-                    subtitle: isOpen ? '$availableSlots διαθέσιμες ώρες • $openTime–$closeTime' : 'Το κατάστημα είναι κλειστό αυτή την ημέρα.',
+                    subtitle: isOpen ? '${_availableAppointmentLabel(availableSlots)} • ωράριο $openTime–$closeTime' : 'Το κατάστημα είναι κλειστό αυτή την ημέρα.',
                   ),
                   const SizedBox(height: 14),
                   if (!isOpen)
                     const PremiumEmptyState(
                       icon: Icons.lock_clock_rounded,
                       title: 'Κλειστά σήμερα',
-                      message: 'Δοκίμασε διαφορετική ημερομηνία για να δεις διαθέσιμες ώρες.',
+                      message: 'Δοκίμασε διαφορετική ημερομηνία για να δεις διαθέσιμα ραντεβού.',
                     )
                   else if (_isLoading)
                     const Padding(
@@ -1616,7 +1621,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   const SizedBox(height: 18),
                   PremiumPrimaryButton(
-                    label: _selectedTime == null ? 'Διάλεξε διαθέσιμη ώρα' : 'Επιβεβαίωση ραντεβού',
+                    label: _selectedTime == null ? 'Διάλεξε διαθέσιμο ραντεβού' : 'Επιβεβαίωση ραντεβού',
                     icon: Icons.check_rounded,
                     loading: _isLoading,
                     onPressed: (_selectedTime == null) ? null : _confirmBooking,
